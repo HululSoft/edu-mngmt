@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تسجيل الدخول</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #d7e3f2;
+            text-align: center;
+        }
+        .login-container {
+            width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .title {
+            margin-bottom: 20px;
+        }
+        .title h1 {
+            margin: 0;
+            color: #2e86c1;
+        }
+        .title img {
+            width: 100px;
+            height: auto;
+            margin-bottom: 20px;
+            border: 3px solid #2e86c1;
+            border-radius: 10px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .form-group {
+            width: 100%;
+            margin-bottom: 15px;
+            max-width: 350px; /* Ensures inputs don’t exceed container width */
+        }
+        label {
+            font-weight: bold;
+            color: #333;
+            display: block;
+            text-align: right;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%; /* Matches container width */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            text-align: right;
+            box-sizing: border-box; /* Ensures padding doesn’t affect width */
+        }
+        .btn-submit {
+            background-color: #2e86c1;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 350px;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+        .btn-submit:hover {
+            background-color: #21618c;
+        }
+        .footer-text {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #566573;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        
+        <!-- Logo and Title -->
+        <div class="title">
+            <img src="{{ url_for('static', filename='salah-eldin.jpg') }}" alt="Salah Eldin">
+            <h1>تسجيل الدخول</h1>
+        </div>
+        
+        <!-- Login Form -->
+        <form action="{{ url_for('login') }}" method="POST">
+            <div class="form-group">
+                <label for="username">اسم المستخدم</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">كلمة المرور</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn-submit">تسجيل الدخول</button>
+        </form>
+
+        <!-- Footer Text -->
+        <div class="footer-text">© مركز صلاح الدين التربوي</div>
+    </div>
+
+</body>
+</html>
