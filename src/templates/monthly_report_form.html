@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التقرير الشهري</title>
+    <style>
+        /* Base styles */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f0f2f5; 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+            direction: rtl; /* Right-to-left text direction */
+        }
+        
+        .form-container { 
+            max-width: 500px; 
+            margin: auto; 
+            padding: 30px; 
+            background-color: #ffffff; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+        }
+        
+        h1 { 
+            color: #2c3e50; 
+            text-align: center; 
+            font-size: 1.8em; 
+            margin-bottom: 20px; 
+        }
+        
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            color: #555; 
+            font-size: 1.1em; 
+        }
+        
+        select, input[type="number"], input[type="submit"] { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            font-size: 1em; 
+        }
+        
+        input[type="submit"] { 
+            background-color: #007bff; 
+            color: white; 
+            cursor: pointer; 
+            transition: background-color 0.3s ease; 
+        }
+        
+        input[type="submit"]:hover { 
+            background-color: #0056b3; 
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>اختر الشهر للتقرير</h1>
+        <form method="POST" action="{{ url_for('monthly_report', class_id=class_id, student_id=student_id) }}">
+            <div class="form-group">
+                <label for="month">الشهر:</label>
+                <select name="month" id="month">
+                    {% for month_num, month_name in [
+                        (1, "يناير"), (2, "فبراير"), (3, "مارس"), (4, "أبريل"),
+                        (5, "مايو"), (6, "يونيو"), (7, "يوليو"), (8, "أغسطس"),
+                        (9, "سبتمبر"), (10, "أكتوبر"), (11, "نوفمبر"), (12, "ديسمبر")
+                    ] %}
+                        <option value="{{ month_num }}">{{ month_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="year">السنة:</label>
+                <input type="number" name="year" id="year" value="2024" required>
+            </div>
+            <input type="submit" value="انشاء التقرير">
+        </form>
+    </div>
+</body>
+</html>

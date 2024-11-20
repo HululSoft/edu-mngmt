@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير الغياب للطلاب</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #d7e3f2;
+            text-align: center;
+        }
+        .content-container {
+            width: 70%;
+            margin: 20px auto;
+            padding: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .title {
+            position: relative;
+            margin-bottom: 30px;
+        }
+        .title h1, .title h2 {
+            margin: 0;
+            color: #2e86c1;
+        }
+        .title img {
+            width: 100px;
+            height: auto;
+            position: absolute;
+            left: 0;
+            top: 0;
+            margin-top: 10px;
+            border: 3px solid #2e86c1;
+            border-radius: 10px;
+        }
+        .header {
+            background-color: #d7e3f2;
+            padding: 20px 0;
+            border-top: 20px solid #2e86c1;
+            border-bottom: 20px solid #2e86c1;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            font-size: 14px;
+            font-weight: bold;
+            color: #566573;
+            text-align: left;
+        }
+        .header-content .area {
+            display: flex;
+            align-items: center;
+        }
+        .header-content .area label {
+            margin-right: 10px;
+            font-weight: bold;
+            color: #333;
+            padding-left: 10px;
+            unicode-bidi: isolate;
+        }
+        .header-content .area span {
+            color: #555;
+            font-style: italic;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+            border: 4px solid #2e86c1;
+            background-color: white;
+            border-radius: 8px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 12px;
+            text-align: center;
+        }
+        .first-row, .first-column {
+            background-color: #2e86c1;
+            color: white;
+            font-weight: bold;
+        }
+        .dynamic-textarea {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            font-size: 14px;
+            resize: none;
+            overflow: hidden;
+            text-align: right;
+            direction: rtl;
+        }
+		        .notes-signature {
+            margin-top: 20px;
+            text-align: right;
+            border: 4px solid #2e86c1;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .notes-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .notes-area {
+            width: calc(100% - 20px);
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: white;
+        }
+        .signature {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 200px;
+            margin-top: 5px;
+        }
+        .respect-text {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #ffffff;
+            background-color: #2e86c1;
+            padding: 5px;
+            border-radius: 5px;
+            text-align: left;
+            width: 300px;
+        }
+        .button-container {
+            max-width: 600px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        .button-container a, .button-container button {
+            text-decoration: none;
+            color: #ffffff;
+            background-color: #4CAF50;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+        .button-container a:hover, .button-container button:hover {
+            background-color: #45a049;
+        }
+		@media print {
+			.no-print {
+				display: none !important;
+			}
+		}
+    </style>
+</head>
+<body>
+    <div class="content-container" id="report-content">
+        <div class="title">
+            <h1>تقرير الطالب الشهري</h1>
+            <h2>مركز صلاح الدين التربوي</h2>
+            <img src="{{ url_for('static', filename='salah-eldin.jpg') }}" alt="Salah Eldin">
+        </div>
+        <div class="header">
+            <div class="header-content">
+                <div class="area">
+                    <label for="student">اسم الطالب</label>
+                    <span id="student">{{ student.name }}</span>
+                </div>
+                <div class="area">
+                    <label for="teacher">اسم المربي</label>
+                    <span id="teacher">{{ teacher_name }}</span>
+                </div>
+                <div class="area">
+                    <label for="class">الصف</label>
+                    <span id="class">{{ class_data.name }}</span>
+                </div>
+                <div class="area">
+                    <label for="month">الشهر</label>
+                    <span id="month">{{ month }}</span>
+                </div>
+            </div>
+        </div>
+        <table>
+            <tr>
+                <th class="first-row first-column" style="width: 30%;"></th>
+                <th class="first-row" style="width: 30%;">النسبة</th>
+                <th class="first-row" style="width: 40%;">ملاحظات</th>
+            </tr>
+            {% for label in scores_labels %}
+            <tr>
+                <td class="first-column" style="width: 30%;">{{ label.label }}</td>
+                <td style="width: 30%;">{{ scores[label.name] }}</td>
+                <td style="width: 40%;">
+                    <textarea 
+                        name="notes_{{ label.name }}" 
+                        class="dynamic-textarea"></textarea>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <div class="notes-signature">
+            <div class="notes-title">ملاحظات:</div>
+            <textarea class="notes-area" rows="4" placeholder="اكتب ملاحظاتك هنا..."></textarea>
+			<div class="signature" style="margin-top: 20px; display: flex; align-items: center; justify-content: flex-start; gap: 20px;">
+				<div style="font-size: 14px; font-weight: bold; color: #333;">توقيع المربي:</div>
+				<canvas id="signatureCanvas" width="300" height="80" style="border: 2px solid #2e86c1; border-radius: 5px; background-color: #f9f9f9;"></canvas>
+				<button class="no-print" onclick="clearSignature()" style="background-color: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-size: 12px; cursor: pointer;">إعادة التوقيع</button>
+			</div>
+        </div>
+    </div>
+	
+	<div class="button-container">
+        <a href="{{ url_for('select_class') }}">Back to Class Selection</a>
+        <button onclick="downloadPDF()">Download as PDF</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+
+    <script>
+		function downloadPDF() {
+			const element = document.getElementById('report-content'); // Select only the report content
+			const clearButton = document.querySelector('.no-print');  // Select the clear button
+			
+			 preserveArabicSpacesInScoreLabels();
+			
+			// Temporarily hide the "Clear Signature" button
+			if (clearButton) {
+				clearButton.style.display = 'none';
+			}
+			
+			const options = {
+				margin: 0,
+				filename: '{{ student.name }}_{{ year }}_{{ month }}_report.pdf',
+				image: { type: 'jpeg', quality: 0.98 },
+				html2canvas: { scale: 2 },
+				jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+			};
+
+			// Generate the PDF
+			html2pdf().set(options).from(element).save().then(() => {
+				// Restore the "Clear Signature" button after the PDF is generated
+				if (clearButton) {
+					clearButton.style.display = '';
+				}
+			});
+		}
+
+		function preserveArabicSpacesInScoreLabels() {
+			const scoreLabelCells = document.querySelectorAll('table tr td:first-child, table tr th:first-child'); // Select the first column cells
+			scoreLabelCells.forEach(cell => {
+				if (isArabicText(cell.textContent)) {
+					cell.textContent = cell.textContent.replace(/ /g, '\u00A0'); // Replace regular spaces with non-breaking spaces
+				}
+			});
+		}
+
+		// Helper function to detect Arabic text
+		function isArabicText(text) {
+			const arabicRegex = /[\u0600-\u06FF]/; // Arabic Unicode range
+			return arabicRegex.test(text);
+		}
+		
+		document.addEventListener('input', function (event) {
+            if (event.target.tagName.toLowerCase() === 'textarea') {
+                const textarea = event.target;
+                textarea.style.height = 'auto'; // Reset height
+                textarea.style.height = textarea.scrollHeight + 'px'; // Adjust to content
+            }
+        });
+		
+		const canvas = document.getElementById('signatureCanvas');
+		const ctx = canvas.getContext('2d');
+		let isDrawing = false;
+
+		canvas.addEventListener('mousedown', (e) => {
+			isDrawing = true;
+			ctx.beginPath();
+			ctx.moveTo(e.offsetX, e.offsetY);
+		});
+
+		canvas.addEventListener('mousemove', (e) => {
+			if (isDrawing) {
+				ctx.lineTo(e.offsetX, e.offsetY);
+				ctx.stroke();
+			}
+		});
+
+		canvas.addEventListener('mouseup', () => {
+			isDrawing = false;
+		});
+
+		canvas.addEventListener('mouseleave', () => {
+			isDrawing = false;
+		});
+
+		function clearSignature() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+		}
+	
+    </script>
+</body>
+</html>
