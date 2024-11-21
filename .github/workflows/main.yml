@@ -1,0 +1,30 @@
+name: Build Docker on Remote Machine
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install SSH Client
+      run: sudo apt-get install -y openssh-client
+
+    - name: Copy Project Files to Remote Machine
+      env:
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+      run: |
+        sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r . root@153.92.233.114:/root/app
+
+    - name: Build Docker Image on Remote Machine
+      env:
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+      run: |
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@153.92.233.114 \
+        "cd /root/app && docker build -t report-app:1.0 ."
