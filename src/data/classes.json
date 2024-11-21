@@ -1,3 +1,7 @@
 [
-    {"id": 1, "name": "السابع والثامن", "teacher_id": 1}
+    {"id": 1, "name": "تاسع - عاشر", "teacher_id": 1},
+    {"id": 2, "name": "السابع والثامن", "teacher_id": 3},
+    {"id": 3, "name": "ثالث - رابع", "teacher_id": 4},
+    {"id": 4, "name": "خامس - سادس", "teacher_id": 5},
+    {"id": 5, "name": "الحادي عشر - الثاني عشر", "teacher_id": 6}
 ]

@@ -4,9 +4,24 @@
         "name": "عمر بدران",
         "password": "U2FsYWhFZGxpbjEyMzQ="
     },
-	{
-        "id": 2,
-        "name": "منير عمر",
-        "password": "$2b$12$38UB.GzPBkGz5p04gcnhQek9rOG7VfY262.z9oJVnBddD.2h8y/Dy"
+    {
+        "id": 3,
+        "name": "عدي بدران",
+        "password": "U2FsYWhFZGxpbjEyMzQ"
+    },
+    {
+        "id": 4,
+        "name": "محمود خربط",
+        "password": "U2FsYWhFZGxpbjEyMzQ"
+    },
+    {
+        "id": 5,
+        "name": "منير ناصر",
+        "password": "U2FsYWhFZGxpbjEyMzQ"
+    },
+    {
+        "id": 6,
+        "name": "أسامة زيدان",
+        "password": "U2FsYWhFZGxpbjEyMzQ"
     }
 ]
