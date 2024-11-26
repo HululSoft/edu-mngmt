@@ -167,16 +167,10 @@ class DataManager:
         with open(self.classes_file, 'w', encoding='utf-8') as file:
             json.dump(classes, file, indent=4, ensure_ascii=False)
 
-    def add_teacher(self, teacher_name, password):
-        # validate the input
-        if not teacher_name:
-            raise ValueError("Teacher name cannot be empty.")
-        if not password:
-            raise ValueError("Password cannot be empty.")
-        teachers = self.load_teachers()
-        # make sure teacher_name is unique
-        if any(teacher['name'] == teacher_name for teacher in teachers):
-            raise ValueError(f"Teacher with name '{teacher_name}' already exists.")
+    def _add_teacher(self, teacher_name, password):
+        # add a new teacher to the teachers list and save it to the file
+        with open(self.teachers_file, 'r', encoding='utf-8') as file:
+            teachers = json.load(file)
         # find the maximum teacher ID
         max_teacher_id = max([teacher['id'] for teacher in teachers], default=0)
         # create a new teacher dictionary
@@ -187,6 +181,18 @@ class DataManager:
         # save the updated teachers list to the file
         with open(self.teachers_file, 'w', encoding='utf-8') as file:
             json.dump(teachers, file, indent=4, ensure_ascii=False)
+
+    def add_teacher(self, teacher_name, password):
+        # validate the input
+        if not teacher_name:
+            raise ValueError("Teacher name cannot be empty.")
+        if not password:
+            raise ValueError("Password cannot be empty.")
+        teachers = self.load_teachers()
+        # make sure teacher_name is unique
+        if any(teacher['name'] == teacher_name for teacher in teachers):
+            raise ValueError(f"Teacher with name '{teacher_name}' already exists.")
+        self._add_teacher(teacher_name, password)
 
 
 
