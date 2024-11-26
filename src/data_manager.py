@@ -1,3 +1,4 @@
+import base64
 import json
 from datetime import datetime
 import calendar
@@ -88,7 +89,7 @@ class DataManager:
                month_start <= datetime.strptime(score['lesson_date'], "%Y-%m-%d") < month_end
         ]
 
-    def save_score(self, score_data): 
+    def save_score(self, score_data):
         try:
             # Open the file in read mode first to load existing scores
             with open(self.scores_file, 'r', encoding='utf-8') as file:
@@ -130,9 +131,64 @@ class DataManager:
             score_type: round((aggregated_score / total_lessons) * 100, 2)
             for score_type, aggregated_score in aggregated_scores.items()
         }
-        
-    
-    
+
+    def load_teachers(self):
+        with open(self.teachers_file, 'r', encoding='utf-8') as file:
+            return [{k: v for k, v in teacher.items() if k != 'password'} for teacher in json.load(file)]
+
+    def load_classes(self):
+        with open(self.classes_file, 'r', encoding='utf-8') as file:
+            return json.load(file)
+
+    def remove_class(self, teacher_id, class_id):
+        classes = self.load_classes()
+        # find the class with class_id and teacher_id, and remove it
+        updated_classes = [class_data for class_data in classes
+                           if class_data['id'] != class_id or class_data['teacher_id'] != teacher_id]
+        # save the updated classes list to the file
+        with open(self.classes_file, 'w', encoding='utf-8') as file:
+            json.dump(updated_classes, file, indent=4, ensure_ascii=False)
+
+    def add_class(self, teacher_id, class_id):
+        classes = self.load_classes()
+        # make sure class_id is already in the list
+        if class_id not in [class_data['id'] for class_data in classes]:
+            raise ValueError(f"Class with ID {class_id} does not exist.")
+        # make sure teacher_id is already in the list
+        if teacher_id not in [teacher['id'] for teacher in self.load_teachers()]:
+            raise ValueError(f"Teacher with ID {teacher_id} does not exist.")
+        # if there is already an entry with class_id and teacher_id, do nothing
+        if any(class_data['id'] == class_id and class_data['teacher_id'] == teacher_id for class_data in classes):
+            return
+        # find the name of the class
+        class_name = next(class_data['name'] for class_data in classes if class_data['id'] == class_id)
+        classes.append({'id': class_id, 'teacher_id': teacher_id, 'name': class_name})
+        # save the updated classes list to the file
+        with open(self.classes_file, 'w', encoding='utf-8') as file:
+            json.dump(classes, file, indent=4, ensure_ascii=False)
+
+    def add_teacher(self, teacher_name, password):
+        # validate the input
+        if not teacher_name:
+            raise ValueError("Teacher name cannot be empty.")
+        if not password:
+            raise ValueError("Password cannot be empty.")
+        teachers = self.load_teachers()
+        # make sure teacher_name is unique
+        if any(teacher['name'] == teacher_name for teacher in teachers):
+            raise ValueError(f"Teacher with name '{teacher_name}' already exists.")
+        # find the maximum teacher ID
+        max_teacher_id = max([teacher['id'] for teacher in teachers], default=0)
+        # create a new teacher dictionary
+        # password show be base64 encoded before saving
+        encoded_password = base64.b64encode(password.encode()).decode()
+        new_teacher = {'id': max_teacher_id + 1, 'name': teacher_name, 'password': encoded_password}
+        teachers.append(new_teacher)
+        # save the updated teachers list to the file
+        with open(self.teachers_file, 'w', encoding='utf-8') as file:
+            json.dump(teachers, file, indent=4, ensure_ascii=False)
+
+
 
 def count_fridays(year: str, month: str) -> int:
     year = int(year)
