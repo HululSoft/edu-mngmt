@@ -1,0 +1,37 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+    direction: rtl; /* Right-to-left text direction */
+}
+
+.form-container {
+    max-width: 600px;
+    margin: auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.assigned_classes li {
+    list-style-type: none;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.assigned_classes li a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.assigned_classes li:hover {
+    background-color: #e0e0e0;
+}

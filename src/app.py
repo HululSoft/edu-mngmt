@@ -1,18 +1,26 @@
-from flask import Flask, request, render_template, redirect, url_for, session, send_file
-from data_manager import DataManager
-from io import BytesIO
-import base64 
+import base64
 import os
+
+from flask import Flask, request, render_template, redirect, url_for, session
+
+from data_manager import DataManager
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
-data_manager = DataManager('data')
+data_manager = DataManager(os.path.join(os.path.dirname(__file__), 'data'))
 
 @app.route('/')
 def index():
     if 'teacher_id' in session:
         return redirect(url_for('select_class'))
     return redirect(url_for('login'))
+
+# adding a route for admin: /admin. this will allow admin, to assign teachers to classes, add new teachers, and add new classes
+@app.route('/admin')
+def admin():
+    teachers = data_manager.load_teachers()
+    classes = data_manager.load_classes()
+    return render_template('management.html', teachers=teachers, classes=classes)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -103,6 +111,27 @@ def monthly_report(class_id, student_id):
         )
         
     return render_template('monthly_report_form.html', class_id=class_id, student_id=student_id)
+
+
+@app.route('/remove_class/<int:teacher_id>/<int:class_id>')
+def remove_class(teacher_id, class_id):
+    data_manager.remove_class(teacher_id, class_id)
+    return redirect(url_for('admin'))
+
+
+
+@app.route('/add_class/<int:teacher_id>/<int:class_id>')
+def add_class(teacher_id, class_id):
+    # Add the class to the teacher's classes
+    data_manager.add_class(teacher_id, class_id)
+    return redirect(url_for('admin'))
+
+@app.route('/add_teacher', methods=['POST'])
+def add_teacher():
+    teacher_name = request.form['teacher_name']
+    password = request.form['teacher_password']
+    data_manager.add_teacher(teacher_name, password)
+    return redirect(url_for('admin'))
 
 @app.route('/logout')
 def logout():
