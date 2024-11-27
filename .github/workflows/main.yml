@@ -12,15 +12,22 @@ jobs:
     - name: Install SSH Client
       run: sudo apt-get install -y openssh-client
 
+    - name: Build Docker Image on Remote Machine
+      env:
+        SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
+      run: |
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@hululsoft.com \
+        "mkdir -p /tmp/hulul-app && docker build -t report-app:1.0 ."
+        
     - name: Copy Project Files to Remote Machine
       env:
         SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
       run: |
-        sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r . root@hululsoft.com:/root/app
+        sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r . root@hululsoft.com:/tmp/hulul-app
 
     - name: Build Docker Image on Remote Machine
       env:
         SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
       run: |
         sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@hululsoft.com \
-        "cd /root/app && docker build -t report-app:1.0 ."
+        "cd /tmp/hulul-app && docker build -t report-app:1.0 ."
