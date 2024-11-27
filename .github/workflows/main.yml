@@ -17,7 +17,7 @@ jobs:
         SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
       run: |
         sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@hululsoft.com \
-        "mkdir -p /tmp/hulul-app && docker build -t report-app:1.0 ."
+        "mkdir -p /tmp/hulul-app"
         
     - name: Copy Project Files to Remote Machine
       env:
