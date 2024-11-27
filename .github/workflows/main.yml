@@ -16,6 +16,7 @@ jobs:
         BRANCH_NAME=$(echo ${{ github.ref_name }} | tr '/' '-')
         DOCKER_IMAGE_TAG=${SHORT_COMMIT_HASH}-${BRANCH_NAME}
         echo "DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG}" >> $GITHUB_ENV
+        echo "DOCKER_CONTAINER_NAME=student-report-container" >> $GITHUB_ENV
 
     - name: Install SSH Client
       run: sudo apt-get install -y openssh-client
