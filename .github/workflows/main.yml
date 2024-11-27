@@ -1,9 +1,5 @@
-name: Build Docker on Remote Machine
-
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   build-docker:
