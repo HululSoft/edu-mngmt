@@ -53,5 +53,5 @@ jobs:
           docker stop $DOCKER_CONTAINER_NAME && docker rm $DOCKER_CONTAINER_NAME
         fi
         echo 'Starting new container...'
-        docker run -d --name $DOCKER_CONTAINER_NAME -p 5000:5000 $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+        docker run -d --name $DOCKER_CONTAINER_NAME -p 5000:5000 -v /var/lib/$DOCKER_CONTAINER_NAME/data:/app/data $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG 
         "  
