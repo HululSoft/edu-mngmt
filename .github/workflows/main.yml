@@ -9,18 +9,49 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
+    - name: Set Up Environment Variables
+      run: |
+        echo "DOCKER_IMAGE_NAME=student-report-generator" >> $GITHUB_ENV
+        SHORT_COMMIT_HASH=$(git rev-parse --short HEAD)
+        BRANCH_NAME=$(echo ${{ github.ref_name }} | tr '/' '-')
+        DOCKER_IMAGE_TAG=${SHORT_COMMIT_HASH}-${BRANCH_NAME}
+        echo "DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG}" >> $GITHUB_ENV
+        echo "DOCKER_CONTAINER_NAME=student-report-container" >> $GITHUB_ENV
+
     - name: Install SSH Client
       run: sudo apt-get install -y openssh-client
 
     - name: Copy Project Files to Remote Machine
       env:
-        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
+        DEPLOY_SERVER_HOST: ${{ vars.DEPLOYMENT_SERVER_HOST }}
       run: |
-        sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r . root@153.92.233.114:/root/app
-
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@$DEPLOY_SERVER_HOST "rm -rf /tmp/hulul-app && mkdir -p /tmp/hulul-app"
+        sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r * root@$DEPLOY_SERVER_HOST:/tmp/hulul-app
+    
     - name: Build Docker Image on Remote Machine
       env:
-        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
+        DEPLOY_SERVER_HOST: ${{ vars.DEPLOYMENT_SERVER_HOST }}
+        DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
+        DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
       run: |
-        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@153.92.233.114 \
-        "cd /root/app && docker build -t report-app:1.0 ."
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@$DEPLOY_SERVER_HOST \
+        "cd /tmp/hulul-app && docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG ."
+
+    - name: Stop and Run Docker Container
+      env:
+        SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
+        DEPLOY_SERVER_HOST: ${{ vars.DEPLOYMENT_SERVER_HOST }}
+        DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
+        DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
+        DOCKER_CONTAINER_NAME: ${{ env.DOCKER_CONTAINER_NAME }}
+      run: |
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@$DEPLOY_SERVER_HOST "
+        if docker ps -q --filter 'name=$DOCKER_CONTAINER_NAME' | grep -q .; then
+          echo 'Stopping existing container...'
+          docker stop $DOCKER_CONTAINER_NAME && docker rm $DOCKER_CONTAINER_NAME
+        fi
+        echo 'Starting new container...'
+        docker run -d --name $DOCKER_CONTAINER_NAME -p 5000:5000 -v /var/lib/$DOCKER_CONTAINER_NAME/data:/app/data $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG 
+        "  
