@@ -16,7 +16,7 @@ jobs:
       env:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
-        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@hululsoft.com "mkdir -p /tmp/hulul-app"
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@hululsoft.com "rm -rf tmp/hulul-app && mkdir -p /tmp/hulul-app"
         sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r * root@hululsoft.com:/tmp/hulul-app
         
     - name: Build Docker Image on Remote Machine
