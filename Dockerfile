@@ -10,6 +10,8 @@ COPY src /app
 # Copy the default data folder into the container
 COPY src/data /default-data
 
+COPY gunicorn.conf.py /app
+
 # Copy the entrypoint script to the container
 COPY entrypoint.sh entrypoint.sh
 
@@ -29,4 +31,4 @@ RUN ls /app/
 # Set the entrypoint script
 ENTRYPOINT ["./entrypoint.sh"]
 
-CMD ["gunicorn","--bind","0.0.0.0:5000","app:app"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:app"]
