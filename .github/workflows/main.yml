@@ -18,9 +18,9 @@ jobs:
 
     - name: Copy Project Files to Remote Machine
       env:
-        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
       run: |
-        sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r . root@153.92.233.114:/root/app
+        sshpass -p "$DEPLOYMENT_SERVER_SSH_PASS" scp -o StrictHostKeyChecking=no -r . root@153.92.233.114:/root/app
 
     - name: Build Docker Image on Remote Machine
       env:
