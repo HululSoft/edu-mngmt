@@ -29,6 +29,4 @@ RUN ls /app/
 # Set the entrypoint script
 ENTRYPOINT ["./entrypoint.sh"]
 
-
-# Command to run the application
-CMD ["flask","run","--host=0.0.0.0","--port=5000"]
+CMD ["gunicorn","--bind","0.0.0.0:5000","app:app"]
