@@ -106,19 +106,15 @@
             <td>{{ teacher.name }}</td>
             <td>
                 <ul class="assigned_classes">
-                    {% for class in classes if class.teacher_id == teacher.id %}
+                    {% for class in classes if teacher.id in class.teacher_ids %}
                     <li>{{ class.name }} <a href="{{ url_for('remove_class', teacher_id=teacher.id, class_id=class.id) }}">X</a></li>
                     {% endfor %}
                 </ul>
             </td>
             <td>
                 <ul class="assigned_classes">
-                    {% set distinct_classes = [] %}
-                    {% for class in classes if class.teacher_id != teacher.id %}
-                    {% if class.name not in distinct_classes %}
-                    {% set _ = distinct_classes.append(class.name) %}
+                    {% for class in classes if teacher.id not in class.teacher_ids %}
                     <li>{{ class.name }} <a href="{{ url_for('add_class', teacher_id=teacher.id, class_id=class.id) }}">+</a></li>
-                    {% endif %}
                     {% endfor %}
                 </ul>
 

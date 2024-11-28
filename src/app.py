@@ -115,7 +115,7 @@ def monthly_report(class_id, student_id):
 
 @app.route('/remove_class/<int:teacher_id>/<int:class_id>')
 def remove_class(teacher_id, class_id):
-    data_manager.remove_class(teacher_id, class_id)
+    data_manager.unassign_class_from_teacher(teacher_id, class_id)
     return redirect(url_for('admin'))
 
 
@@ -123,14 +123,14 @@ def remove_class(teacher_id, class_id):
 @app.route('/add_class/<int:teacher_id>/<int:class_id>')
 def add_class(teacher_id, class_id):
     # Add the class to the teacher's classes
-    data_manager.add_class(teacher_id, class_id)
+    data_manager.assign_class_to_teacher(teacher_id, class_id)
     return redirect(url_for('admin'))
 
 @app.route('/add_teacher', methods=['POST'])
 def add_teacher():
     teacher_name = request.form['teacher_name']
     password = request.form['teacher_password']
-    data_manager.add_teacher(teacher_name, password)
+    data_manager.add_new_teacher(teacher_name, password)
     return redirect(url_for('admin'))
 
 # route for add new class
