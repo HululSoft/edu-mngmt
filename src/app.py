@@ -133,6 +133,14 @@ def add_teacher():
     data_manager.add_teacher(teacher_name, password)
     return redirect(url_for('admin'))
 
+# route for add new class
+@app.route('/add_new_class', methods=['POST'])
+def add_new_class():
+    class_name = request.form['class_name']
+    assigned_teacher = request.form['teacher_id']
+    data_manager.add_new_class(class_name, assigned_teacher)
+    return redirect(url_for('admin'))
+
 @app.route('/logout')
 def logout():
     session.pop('teacher_id', None)

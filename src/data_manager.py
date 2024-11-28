@@ -194,6 +194,31 @@ class DataManager:
             raise ValueError(f"Teacher with name '{teacher_name}' already exists.")
         self._add_teacher(teacher_name, password)
 
+    def add_new_class(self, class_name, assigned_teacher_id:int):
+        # Load the current list of classes
+        with open(self.classes_file, 'r', encoding='utf-8') as file:
+            classes = json.load(file)
+
+        # check if class name is not already present
+        if any(class_data['name'] == class_name for class_data in classes):
+            raise ValueError(f"Class with name '{class_name}' already exists.")
+
+        # Find the maximum class ID
+        max_class_id = max([class_data['id'] for class_data in classes], default=0)
+
+        # Create a new class dictionary
+        new_class = {
+            'id': max_class_id + 1,
+            'name': class_name,
+            'teacher_id': assigned_teacher_id
+        }
+
+        # Append the new class to the list
+        classes.append(new_class)
+
+        # Save the updated list of classes back to the file
+        with open(self.classes_file, 'w', encoding='utf-8') as file:
+            json.dump(classes, file, indent=4, ensure_ascii=False)
 
 
 def count_fridays(year: str, month: str) -> int:
