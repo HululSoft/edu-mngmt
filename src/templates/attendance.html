@@ -125,6 +125,16 @@
                 <input type="submit" value="تقديم الحضور">
             </div>
         </form>
+        <h2>إضافة طالب</h2>
+        <form method="POST" action="{{ url_for('add_new_student', class_id=class_id) }}">
+            <div class="form-group">
+                <label for="student_name">اسم الطالب:</label>
+                <input type="text" name="student_name" required>
+            </div>
+            <div class="actions">
+                <input type="submit" value="إضافة طالب">
+            </div>
+        </form>
     </div>
 </body>
 </html>

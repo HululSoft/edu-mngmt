@@ -220,6 +220,34 @@ class DataManager:
         with open(self.classes_file, 'w', encoding='utf-8') as file:
             json.dump(classes, file, indent=4, ensure_ascii=False)
 
+    def add_new_student(self, student_name:str, class_id:int):
+        # Load the current list of students
+        with open(self.students_file, 'r', encoding='utf-8') as file:
+            students = json.load(file)
+
+        # validate student name is not empty and does not already exist in the class
+        if not student_name:
+            raise ValueError("Student name cannot be empty.")
+        if any(student['name'] == student_name and student['class_id'] == class_id for student in students):
+            raise ValueError(f"Student with name '{student_name}' already exists in the class.")
+
+        # Find the maximum student ID
+        max_student_id = max([student['id'] for student in students], default=0)
+
+        # Create a new student dictionary
+        new_student = {
+            'id': max_student_id + 1,
+            'name': student_name,
+            'class_id': class_id
+        }
+
+        # Append the new student to the list
+        students.append(new_student)
+
+        # Save the updated list of students back to the file
+        with open(self.students_file, 'w', encoding='utf-8') as file:
+            json.dump(students, file, indent=4, ensure_ascii=False)
+
 
 def count_fridays(year: str, month: str) -> int:
     year = int(year)

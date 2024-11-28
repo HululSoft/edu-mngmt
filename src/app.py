@@ -137,9 +137,18 @@ def add_teacher():
 @app.route('/add_new_class', methods=['POST'])
 def add_new_class():
     class_name = request.form['class_name']
-    assigned_teacher = request.form['teacher_id']
+    # get the teacher id from the form as integer
+    assigned_teacher = int(request.form['teacher_id'])
     data_manager.add_new_class(class_name, assigned_teacher)
     return redirect(url_for('admin'))
+
+# route for add new student
+@app.route('/add_new_student/<int:class_id>', methods=['POST'])
+def add_new_student(class_id):
+    student_name = request.form['student_name']
+    data_manager.add_new_student(student_name, class_id)
+    return redirect(url_for('attendance', class_id=class_id))
+
 
 @app.route('/logout')
 def logout():
