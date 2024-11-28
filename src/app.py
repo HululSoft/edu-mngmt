@@ -95,7 +95,7 @@ def monthly_report(class_id, student_id):
         student = data_manager.get_student_by_id(student_id)
         class_data = data_manager.get_class_by_id(class_id)
         scores_labels=data_manager.load_score_labels()
-        teacher_name = data_manager.get_teacher_name(class_data['teacher_id'])
+        teacher_name = data_manager.get_teacher_name(session['teacher_id'])
         
         report = data_manager.get_monthly_report(student_id, class_id, month,year)
         print("scores_labels=",scores_labels)

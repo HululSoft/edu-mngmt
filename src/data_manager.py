@@ -214,7 +214,7 @@ class DataManager:
         new_class = {
             'id': max_class_id + 1,
             'name': class_name,
-            'teacher_id': assigned_teacher_id
+            'teacher_ids': [assigned_teacher_id]
         }
 
         # Append the new class to the list
