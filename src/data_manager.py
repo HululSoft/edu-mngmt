@@ -60,8 +60,8 @@ class DataManager:
         with open(self.classes_file, 'r',encoding='utf-8') as file:
             classes = json.load(file)
         
-        # Filter and return the list of classes that match the teacher_id
-        teacher_classes = [class_data for class_data in classes if class_data['teacher_id'] == teacher_id]
+        # Filter and return the list of classes with the matching teacher_id in the teacher_ids list
+        teacher_classes = [class_data for class_data in classes if teacher_id in class_data['teacher_ids']]
         return teacher_classes
         
     def get_teacher_by_name(self, teacher_name):
@@ -140,16 +140,20 @@ class DataManager:
         with open(self.classes_file, 'r', encoding='utf-8') as file:
             return json.load(file)
 
-    def remove_class(self, teacher_id, class_id):
+    def unassign_class_from_teacher(self, teacher_id, class_id):
         classes = self.load_classes()
-        # find the class with class_id and teacher_id, and remove it
-        updated_classes = [class_data for class_data in classes
-                           if class_data['id'] != class_id or class_data['teacher_id'] != teacher_id]
+        # find the class with class_id and remove teacher_id from the list of teacher_ids. if teacher_id is not in the list, do nothing
+        for class_data in classes:
+            if class_data['id'] == class_id:
+                if teacher_id in class_data['teacher_ids']:
+                    class_data['teacher_ids'].remove(teacher_id)
+                    break
         # save the updated classes list to the file
         with open(self.classes_file, 'w', encoding='utf-8') as file:
-            json.dump(updated_classes, file, indent=4, ensure_ascii=False)
+            json.dump(classes, file, indent=4, ensure_ascii=False)
 
-    def add_class(self, teacher_id, class_id):
+
+    def assign_class_to_teacher(self, teacher_id, class_id):
         classes = self.load_classes()
         # make sure class_id is already in the list
         if class_id not in [class_data['id'] for class_data in classes]:
@@ -157,12 +161,12 @@ class DataManager:
         # make sure teacher_id is already in the list
         if teacher_id not in [teacher['id'] for teacher in self.load_teachers()]:
             raise ValueError(f"Teacher with ID {teacher_id} does not exist.")
-        # if there is already an entry with class_id and teacher_id, do nothing
-        if any(class_data['id'] == class_id and class_data['teacher_id'] == teacher_id for class_data in classes):
-            return
-        # find the name of the class
-        class_name = next(class_data['name'] for class_data in classes if class_data['id'] == class_id)
-        classes.append({'id': class_id, 'teacher_id': teacher_id, 'name': class_name})
+        # if there is already an entry with class_id and teacher_id, do nothing. else add teacher_id to the list of teacher_ids
+        for class_data in classes:
+            if class_data['id'] == class_id:
+                if teacher_id not in class_data['teacher_ids']:
+                    class_data['teacher_ids'].append(teacher_id)
+                    break
         # save the updated classes list to the file
         with open(self.classes_file, 'w', encoding='utf-8') as file:
             json.dump(classes, file, indent=4, ensure_ascii=False)
@@ -182,7 +186,7 @@ class DataManager:
         with open(self.teachers_file, 'w', encoding='utf-8') as file:
             json.dump(teachers, file, indent=4, ensure_ascii=False)
 
-    def add_teacher(self, teacher_name, password):
+    def add_new_teacher(self, teacher_name, password):
         # validate the input
         if not teacher_name:
             raise ValueError("Teacher name cannot be empty.")
