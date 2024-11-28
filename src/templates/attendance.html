@@ -7,34 +7,70 @@
 
     <title>تقديم الحضور</title>
     <style>
-        
+
+        /* Ensure the main container is responsive */
         .form-container { 
-            max-width: 600px; 
-            margin: auto; 
-            padding: 30px; 
+            max-width: 100%; /* Ensure it doesn't exceed the screen width */
+            overflow-x: auto; /* Allow horizontal scrolling if content overflows */
+            padding: 20px; 
             background-color: #ffffff; 
             border-radius: 10px; 
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
         }
-        
+
+        /* Adjust table styling for smaller screens */
+        table { 
+            width: 100%; 
+            table-layout: fixed; /* Force the table to fit the container */
+            border-collapse: collapse; 
+            margin-top: 20px; 
+        }
+
+        th, td { 
+            padding: 12px; 
+            border-bottom: 1px solid #ddd; 
+            text-align: center; 
+            word-wrap: break-word; /* Ensure long words wrap */
+        }
+
+        /* Adjust input fields to match container width */
+        input[type="date"], input[type="text"] { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        }
+
+        /* Ensure responsive design for mobile */
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 10px; /* Adjust padding for smaller screens */
+            }
+
+            table {
+                font-size: 0.9em; /* Reduce font size for better fit */
+            }
+
+            th, td {
+                padding: 8px; /* Reduce padding */
+            }
+        }
         h1 { 
             color: #2c3e50; 
             text-align: center; 
             font-size: 1.8em; 
             margin-bottom: 20px; 
         }
-        
         .form-group { 
             margin-bottom: 20px; 
         }
-        
         label { 
             color: #555; 
             font-size: 1.1em; 
             display: block; 
             margin-bottom: 8px; 
         }
-        
         input[type="date"] { 
             width: 100%; 
             padding: 10px; 
@@ -42,19 +78,6 @@
             border-radius: 4px; 
             box-sizing: border-box; 
         }
-        
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 20px; 
-        }
-        
-        th, td { 
-            padding: 12px; 
-            border-bottom: 1px solid #ddd; 
-            text-align: center; 
-        }
-        
         th { 
             background-color: #e9ecef; 
             color: #333; 
