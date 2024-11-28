@@ -279,34 +279,48 @@
             }
         });
 		
-		const canvas = document.getElementById('signatureCanvas');
-		const ctx = canvas.getContext('2d');
-		let isDrawing = false;
+	const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
 
-		canvas.addEventListener('mousedown', (e) => {
-			isDrawing = true;
-			ctx.beginPath();
-			ctx.moveTo(e.offsetX, e.offsetY);
-		});
+        // Unified event handler for touch and mouse
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.touches ? e.touches[0].clientX : e.clientX;
+            const y = e.touches ? e.touches[0].clientY : e.clientY;
+            ctx.beginPath();
+            ctx.moveTo(x - rect.left, y - rect.top);
+            e.preventDefault(); // Prevent scrolling on touch devices
+        }
 
-		canvas.addEventListener('mousemove', (e) => {
-			if (isDrawing) {
-				ctx.lineTo(e.offsetX, e.offsetY);
-				ctx.stroke();
-			}
-		});
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.touches ? e.touches[0].clientX : e.clientX;
+            const y = e.touches ? e.touches[0].clientY : e.clientY;
+            ctx.lineTo(x - rect.left, y - rect.top);
+            ctx.stroke();
+            e.preventDefault();
+        }
 
-		canvas.addEventListener('mouseup', () => {
-			isDrawing = false;
-		});
+        function stopDrawing() {
+            isDrawing = false;
+        }
 
-		canvas.addEventListener('mouseleave', () => {
-			isDrawing = false;
-		});
+        // Add event listeners for touch and mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
 
-		function clearSignature() {
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-		}
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+	function clearSignature() {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	}
 	
     </script>
 </body>
