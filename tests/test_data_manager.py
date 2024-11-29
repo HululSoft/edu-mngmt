@@ -89,5 +89,14 @@ class TestDataManager(unittest.TestCase):
         self.data_manager.unassign_class_from_teacher(1, 1)
         self.assertNotIn(1, self.data_manager.get_class_by_id(1)['teacher_ids'])
 
+    def test_update_student(self):
+        self.data_manager.update_student(1, student_name="Student C", class_id=2, join_date="2023-01-01", phone_number="123-456-7890", parent_number="098-765-4321")
+        student = self.data_manager.get_student_by_id(1)
+        self.assertEqual(student['name'], "Student C")
+        self.assertEqual(student['class_id'], 2)
+        self.assertEqual(student['date_joined'], "2023-01-01")
+        self.assertEqual(student['phone'], "123-456-7890")
+        self.assertEqual(student['parent_phone'], "098-765-4321")
+
 if __name__ == '__main__':
     unittest.main()
