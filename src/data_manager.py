@@ -252,6 +252,26 @@ class DataManager:
         with open(self.students_file, 'w', encoding='utf-8') as file:
             json.dump(students, file, indent=4, ensure_ascii=False)
 
+    def update_student(self, student_id, student_name, class_id, phone_number, parent_number, join_date):
+        # Load the current list of students
+        with open(self.students_file, 'r', encoding='utf-8') as file:
+            students = json.load(file)
+
+        # Find the student to update by matching the student_id
+        for student in students:
+            if student['id'] == student_id:
+                # Update the student details
+                student['name'] = student_name
+                student['class_id'] = class_id
+                student['phone'] = phone_number
+                student['parent_phone'] = parent_number
+                student['date_joined'] = join_date
+                break
+
+        # Save the updated list of students back to the file
+        with open(self.students_file, 'w', encoding='utf-8') as file:
+            json.dump(students, file, indent=4, ensure_ascii=False)
+
 
 def count_fridays(year: str, month: str) -> int:
     year = int(year)

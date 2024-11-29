@@ -1,7 +1,7 @@
 import base64
 import os
 
-from flask import Flask, request, render_template, redirect, url_for, session
+from flask import Flask, request, render_template, redirect, url_for, session, jsonify
 
 from data_manager import DataManager
 
@@ -148,6 +148,31 @@ def add_new_student(class_id):
     student_name = request.form['student_name']
     data_manager.add_new_student(student_name, class_id)
     return redirect(url_for('attendance', class_id=class_id))
+
+# route for showing student info. accepts student id
+@app.route('/student/<int:student_id>')
+def student(student_id):
+    student = data_manager.get_student_by_id(student_id)
+    # load classes to display in the drop down
+    classes = data_manager.load_classes()
+    return render_template('student.html', student=student, classes=classes)
+
+
+# route for update_student. it accepts FormData for a student id
+@app.route('/update_student/<int:student_id>', methods=['POST'])
+def update_student(student_id):
+    student_name = request.form['name']
+    class_id = int(request.form['class'])
+    phone_number = request.form['phone']
+    parent_number = request.form['parent_phone']
+    join_date = request.form['date_joined']
+    try:
+        data_manager.update_student(student_id, student_name, class_id, phone_number, parent_number, join_date)
+        return jsonify({'message': 'Student updated successfully'}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': f'Error updating student: {str(e)}'}), 400
+
 
 
 @app.route('/logout')

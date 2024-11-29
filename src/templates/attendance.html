@@ -135,7 +135,7 @@
                 <tbody>
                     {% for student in students %}
                         <tr>
-                            <td>{{ student.name }}</td>
+                            <td><a href="{{ url_for('student', student_id=student.id) }}">{{ student.name }}</a></td>
                             {% for score in scores_labels %}
                                 <td><input type="checkbox" name="{{ score.name }}_{{ student.id }}"></td>
                             {% endfor %}
