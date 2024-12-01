@@ -57,27 +57,43 @@
     </style>
 </head>
 <body>
-    <div class="form-container">
-        <h1>اختر الشهر للتقرير</h1>
-        <form method="POST" action="{{ url_for('monthly_report', class_id=class_id, student_id=student_id) }}">
-            <div class="form-group">
-                <label for="month">الشهر:</label>
-                <select name="month" id="month">
-                    {% for month_num, month_name in [
-                        (1, "يناير"), (2, "فبراير"), (3, "مارس"), (4, "أبريل"),
-                        (5, "مايو"), (6, "يونيو"), (7, "يوليو"), (8, "أغسطس"),
-                        (9, "سبتمبر"), (10, "أكتوبر"), (11, "نوفمبر"), (12, "ديسمبر")
-                    ] %}
-                        <option value="{{ month_num }}">{{ month_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="year">السنة:</label>
-                <input type="number" name="year" id="year" value="2024" required>
-            </div>
-            <input type="submit" value="انشاء التقرير">
-        </form>
-    </div>
+<div class="form-container">
+    <h1>اختر الشهر للتقرير</h1>
+    <form method="POST" action="{{ url_for('monthly_report', class_id=class_id, student_id=student_id) }}">
+        <div class="form-group">
+            <label for="month">الشهر:</label>
+            <select name="month" id="month">
+                <option value="1">يناير</option>
+                <option value="2">فبراير</option>
+                <option value="3">مارس</option>
+                <option value="4">أبريل</option>
+                <option value="5">مايو</option>
+                <option value="6">يونيو</option>
+                <option value="7">يوليو</option>
+                <option value="8">أغسطس</option>
+                <option value="9">سبتمبر</option>
+                <option value="10">أكتوبر</option>
+                <option value="11">نوفمبر</option>
+                <option value="12">ديسمبر</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="year">السنة:</label>
+            <input type="number" name="year" id="year" value="2024" required>
+        </div>
+        <input type="submit" value="انشاء التقرير">
+    </form>
+</div>
+
+<script>
+    // JavaScript to set the current month as selected
+    document.addEventListener("DOMContentLoaded", function () {
+        const currentMonth = new Date().getMonth() + 1; // Get current month (0-based, so add 1)
+        const monthDropdown = document.getElementById("month");
+
+        // Set the selected option in the dropdown
+        monthDropdown.value = currentMonth;
+    });
+</script>
 </body>
 </html>
