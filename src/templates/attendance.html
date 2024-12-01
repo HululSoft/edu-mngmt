@@ -160,4 +160,16 @@
         </form>
     </div>
 </body>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Get the current date
+        const today = new Date();
+        
+        // Format the date as YYYY-MM-DD
+        const formattedDate = today.toISOString().split('T')[0];
+        
+        // Set the default value of the date input field
+        document.getElementById("lesson_date").value = formattedDate;
+    });
+</script>
 </html>
