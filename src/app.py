@@ -1,5 +1,6 @@
 import base64
 import os
+from functools import wraps
 
 from flask import Flask, request, render_template, redirect, url_for, session, jsonify
 
@@ -9,11 +10,19 @@ app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 data_manager = DataManager(os.path.join(os.path.dirname(__file__), 'data'))
 
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'teacher_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
+@login_required
 def index():
-    if 'teacher_id' in session:
-        return redirect(url_for('select_class'))
-    return redirect(url_for('login'))
+    return redirect(url_for('select_class'))
 
 # adding a route for admin: /admin. this will allow admin, to assign teachers to classes, add new teachers, and add new classes
 @app.route('/admin')
@@ -46,10 +55,8 @@ def decrypt_password(encrypted_password: str) -> str:
     return base64.b64decode(encrypted_password.encode()).decode()
     
 @app.route('/select_class')
+@login_required
 def select_class():
-    if 'teacher_id' not in session:
-        return redirect(url_for('login'))
-
     teacher_id = session['teacher_id']
     classes = data_manager.get_classes_by_teacher(teacher_id)
     teacher_name = data_manager.get_teacher_name(teacher_id)
@@ -57,10 +64,8 @@ def select_class():
     return render_template('select_class.html', teacher_name=teacher_name, classes=classes)
 
 @app.route('/attendance/<int:class_id>', methods=['GET', 'POST'])
+@login_required
 def attendance(class_id):
-    if 'teacher_id' not in session:
-        return redirect(url_for('login'))
-
     if request.method == 'POST':
         lesson_date = request.form['lesson_date']
         students = data_manager.get_students_by_class(class_id)
@@ -85,10 +90,8 @@ def attendance(class_id):
     return render_template('attendance.html', students=students, class_id=class_id, scores_labels=scores_labels)
 
 @app.route('/monthly_report/<int:class_id>/<int:student_id>', methods=['GET', 'POST'])
+@login_required
 def monthly_report(class_id, student_id):
-    if 'teacher_id' not in session:
-        return redirect(url_for('login'))
-
     if request.method == 'POST':
         month = request.form['month']
         year = request.form['year']
