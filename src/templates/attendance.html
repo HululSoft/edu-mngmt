@@ -134,7 +134,7 @@
                 </thead>
                 <tbody>
                     {% for student in students %}
-                        <tr>
+                        <tr id="studentId_{{ student.id }}">
                             <td><a href="{{ url_for('student', student_id=student.id) }}">{{ student.name }}</a></td>
                             {% for score in scores_labels %}
                                 <td><input type="checkbox" name="{{ score.name }}_{{ student.id }}"></td>
@@ -170,6 +170,39 @@
         
         // Set the default value of the date input field
         document.getElementById("lesson_date").value = formattedDate;
+        fetchAndUpdateAttendance(formattedDate);
     });
+
+
+    // add event listener for lesson_date element when set or changed, to load attendance data for that date.
+    document.getElementById("lesson_date").addEventListener("change", async function () {
+        await fetchAndUpdateAttendance(this.value);
+    });
+
+    async function fetchAndUpdateAttendance(lessonDate) {
+        try {
+            // Fetch attendance data for the selected date and class
+            const response = await fetch(`/attendance_data/{{ class_id }}/${lessonDate}`);
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+            const data = await response.json();
+
+            // Update the DOM with the fetched data
+            data.forEach(studentScores => {
+                const studentRow = document.querySelector(`tr[id="studentId_${studentScores.student_id}"]`);
+                if (!studentRow) return;
+
+                Object.keys(studentScores).forEach(prop => {
+                    const scoreCheckbox = studentRow.querySelector(`input[name="${prop}_${studentScores.student_id}"]`);
+                    if (scoreCheckbox) {
+                        scoreCheckbox.checked = Boolean(studentScores[prop]);
+                    }
+                });
+            });
+        } catch (error) {
+            console.error("Error fetching or processing attendance data:", error);
+        }
+    }
+
 </script>
 </html>

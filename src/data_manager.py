@@ -89,6 +89,10 @@ class DataManager:
                month_start <= datetime.strptime(score['lesson_date'], "%Y-%m-%d") < month_end
         ]
 
+    def get_scores_by_date(self, lesson_date): # todo add class id to scores to return class-specific scores
+        with open(self.scores_file, 'r', encoding='utf-8') as file:
+            scores = json.load(file)
+        return [score for score in scores if score['lesson_date'] == lesson_date]
     def save_score(self, score_data):
         try:
             # Open the file in read mode first to load existing scores

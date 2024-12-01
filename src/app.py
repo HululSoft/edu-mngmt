@@ -89,6 +89,15 @@ def attendance(class_id):
     scores_labels = data_manager.load_score_labels()
     return render_template('attendance.html', students=students, class_id=class_id, scores_labels=scores_labels)
 
+# route for attendance data. accepts a class id and a specific date. GET method. return json data
+@app.route('/attendance_data/<int:class_id>/<date>')
+def attendance_data(class_id, date):
+    scores = data_manager.get_scores_by_date(date)
+    return jsonify(scores)
+
+
+
+
 @app.route('/monthly_report/<int:class_id>/<int:student_id>', methods=['GET', 'POST'])
 @login_required
 def monthly_report(class_id, student_id):
