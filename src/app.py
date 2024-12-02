@@ -77,6 +77,7 @@ def attendance(class_id):
             new_score = {
                 'student_id': student_id,
                 'lesson_date': lesson_date,
+                'class_id': class_id
             }
             for score in score_labels:
                 new_score[score['name']] = f"{score['name']}_{student_id}" in request.form
@@ -92,8 +93,8 @@ def attendance(class_id):
 # route for attendance data. accepts a class id and a specific date. GET method. return json data
 @app.route('/attendance_data/<int:class_id>/<date>')
 def attendance_data(class_id, date):
-    scores = data_manager.get_scores_by_date(date)
-    return jsonify(scores)
+    result = data_manager.get_scores_by_date(date, class_id, include_adjacent_dates=True)
+    return jsonify(result)
 
 
 

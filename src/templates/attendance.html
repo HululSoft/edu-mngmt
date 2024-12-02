@@ -122,7 +122,7 @@
                 <label for="lesson_date">تاريخ الدرس:</label>
                 <input type="date" id="lesson_date" name="lesson_date" required>
             </div>
-            <table>
+            <table id="scoresTable">
                 <thead>
                     <tr>
                         <th>اسم الطالب</th>
@@ -186,9 +186,14 @@
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
             const data = await response.json();
-
+            if (!data.scores || data.scores.length === 0) {
+                const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
+                checkboxes.forEach(checkbox => checkbox.checked = false);
+                console.log("No attendance data found for the selected date and class.", data);
+                return;
+            }
             // Update the DOM with the fetched data
-            data.forEach(studentScores => {
+            data.scores.forEach(studentScores => {
                 const studentRow = document.querySelector(`tr[id="studentId_${studentScores.student_id}"]`);
                 if (!studentRow) return;
 

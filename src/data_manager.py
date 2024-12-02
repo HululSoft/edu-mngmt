@@ -89,10 +89,26 @@ class DataManager:
                month_start <= datetime.strptime(score['lesson_date'], "%Y-%m-%d") < month_end
         ]
 
-    def get_scores_by_date(self, lesson_date): # todo add class id to scores to return class-specific scores
+    def get_scores_by_date(self, lesson_date, class_id, include_adjacent_dates=False):
         with open(self.scores_file, 'r', encoding='utf-8') as file:
             scores = json.load(file)
-        return [score for score in scores if score['lesson_date'] == lesson_date]
+
+        if include_adjacent_dates:
+            previous_date = next_date = None
+            # extract dates in a set. sort the set by date, and get the dates preceding and following lesson_date
+            lesson_dates = set([score["lesson_date"] for score in scores])
+            if lesson_date not in lesson_dates:
+                lesson_dates.add(lesson_date)
+            lesson_dates = sorted(lesson_dates,  key=lambda x: datetime.strptime(x, '%Y-%m-%d'))
+            lesson_date_index = lesson_dates.index(lesson_date)
+            if lesson_date_index > 0:
+                previous_date = lesson_dates[lesson_date_index - 1]
+            if lesson_date_index + 1 < len(lesson_dates):
+                next_date = lesson_dates[lesson_date_index + 1]
+            return dict(scores=[score for score in scores if score['lesson_date'] == lesson_date],
+                          previous_date=previous_date, next_date=next_date)
+        else:
+             return dict(scores=[score for score in scores if score['lesson_date'] == lesson_date])
     def save_score(self, score_data):
         try:
             # Open the file in read mode first to load existing scores
@@ -107,11 +123,11 @@ class DataManager:
             # Initialize as an empty list if the file doesn't exist
             scores = []
         
-        # Create a dictionary for quick lookup by (student_id, lesson_date)
-        scores_dict = {(score['student_id'], score['lesson_date']): score for score in scores}
+        # Create a dictionary for quick lookup by (student_id, lesson_date, class_id) tuple
+        scores_dict = {(score['student_id'], score['lesson_date'], score['class_id']): score for score in scores}
         
         # Add or replace the score in the dictionary
-        key = (score_data['student_id'], score_data['lesson_date'])
+        key = (score_data['student_id'], score_data['lesson_date'], score_data['class_id'])
         scores_dict[key] = score_data  # Replace or add the score
         
         # Convert the dictionary back to a list
