@@ -3,126 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
     <title>تقديم الحضور</title>
-    <style>
-
-        /* Ensure the main container is responsive */
-        .form-container { 
-            max-width: 100%; /* Ensure it doesn't exceed the screen width */
-            overflow-x: auto; /* Allow horizontal scrolling if content overflows */
-            padding: 20px; 
-            background-color: #ffffff; 
-            border-radius: 10px; 
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
-        }
-
-        /* Adjust table styling for smaller screens */
-        table { 
-            width: 100%; 
-            table-layout: fixed; /* Force the table to fit the container */
-            border-collapse: collapse; 
-            margin-top: 20px; 
-        }
-
-        th, td { 
-            padding: 12px; 
-            border-bottom: 1px solid #ddd; 
-            text-align: center; 
-            word-wrap: break-word; /* Ensure long words wrap */
-        }
-
-        /* Adjust input fields to match container width */
-        input[type="date"], input[type="text"] { 
-            width: 100%; 
-            padding: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            box-sizing: border-box; 
-        }
-
-        /* Ensure responsive design for mobile */
-        @media (max-width: 768px) {
-            .form-container {
-                padding: 10px; /* Adjust padding for smaller screens */
-            }
-
-            table {
-                font-size: 0.9em; /* Reduce font size for better fit */
-            }
-
-            th, td {
-                padding: 8px; /* Reduce padding */
-            }
-        }
-        h1 { 
-            color: #2c3e50; 
-            text-align: center; 
-            font-size: 1.8em; 
-            margin-bottom: 20px; 
-        }
-        .form-group { 
-            margin-bottom: 20px; 
-        }
-        label { 
-            color: #555; 
-            font-size: 1.1em; 
-            display: block; 
-            margin-bottom: 8px; 
-        }
-        input[type="date"] { 
-            width: 100%; 
-            padding: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            box-sizing: border-box; 
-        }
-        th { 
-            background-color: #e9ecef; 
-            color: #333; 
-        }
-        
-        .actions { 
-            text-align: center; 
-            margin-top: 20px; 
-        }
-        
-        input[type="submit"] { 
-            background-color: #007bff; 
-            color: white; 
-            padding: 12px 20px; 
-            border: none; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-size: 1em; 
-            transition: background-color 0.3s ease; 
-        }
-        
-        input[type="submit"]:hover { 
-            background-color: #0056b3; 
-        }
-
-        a { 
-            color: #007bff; 
-            text-decoration: none; 
-            font-weight: bold; 
-        }
-        
-        a:hover { 
-            color: #0056b3; 
-        }
-    </style>
 </head>
 <body>
-    <div class="form-container">
-        <h1>تقديم الحضور</h1>
-        <form method="POST" action="{{ url_for('attendance', class_id=class_id) }}">
-            <div class="form-group">
-                <label for="lesson_date">تاريخ الدرس:</label>
-                <input type="date" id="lesson_date" name="lesson_date" required>
+    <div class="container-fluid">
+
+        <h1 class="text-center">متابعة الحضور</h1>
+
+        <div class="row d-flex justify-content-between">
+            <div class="col d-flex justify-content-between">
+                <div class="text-start" id="previous_date" data-lesson-date="{{ previous_date }}">
+                    <button class="btn btn-outline-secondary">
+                        <i class="bi bi-chevron-right"></i> <!-- Bootstrap Icons -->
+                        <span>{{ previous_date }}</span>
+                    </button>
+                </div>
+                <!-- Next Icon with Date -->
+                <div class="text-end" id="next_date" data-lesson-date="{{ next_date }}">
+                    <button class="btn btn-outline-secondary">
+                        <span>{{ next_date }}</span>
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                </div>
             </div>
-            <table id="scoresTable">
+        </div>
+        <form method="POST" action="{{ url_for('attendance', class_id=class_id) }}">
+            <!-- Current Date -->
+            <div class="col text-center">
+                <input type="date" id="lesson_date" name="lesson_date" class="mb-2 p-2" required>
+            </div>
+
+            <table id="scoresTable" class="table table-bordered">
                 <thead>
                     <tr>
                         <th>اسم الطالب</th>
@@ -144,18 +59,8 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <div class="actions">
-                <input type="submit" value="تقديم الحضور">
-            </div>
-        </form>
-        <h2>إضافة طالب</h2>
-        <form method="POST" action="{{ url_for('add_new_student', class_id=class_id) }}">
-            <div class="form-group">
-                <label for="student_name">اسم الطالب:</label>
-                <input type="text" name="student_name" required>
-            </div>
-            <div class="actions">
-                <input type="submit" value="إضافة طالب">
+            <div class="actions text-center">
+                <input type="submit" class="btn btn-primary" value="تقديم الحضور">
             </div>
         </form>
     </div>
@@ -179,6 +84,20 @@
         await fetchAndUpdateAttendance(this.value);
     });
 
+    // add event listener for previous_date element when clicked, to load attendance data for that date.
+    document.getElementById("previous_date").addEventListener("click", async function () {
+        console.log("previous_date clicked");
+        console.log("previous_date value:", this.getAttribute("data-lesson-date"));
+        await fetchAndUpdateAttendance(this.getAttribute("data-lesson-date"));
+    });
+
+    // add event listener for next_date element when clicked, to load attendance data for that date.
+    document.getElementById("next_date").addEventListener("click", async function () {
+        console.log("next_date clicked");
+        console.log("next_date value:", this.getAttribute("data-lesson-date"));
+        await fetchAndUpdateAttendance(this.getAttribute("data-lesson-date"));
+    });
+
     async function fetchAndUpdateAttendance(lessonDate) {
         try {
             // Fetch attendance data for the selected date and class
@@ -186,6 +105,21 @@
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
             const data = await response.json();
+            if (data) {
+                // set current date to lesson_date element
+                document.getElementById("lesson_date").value = lessonDate;
+
+                console.log("Fetched attendance data:", data);
+                // get previous_date_element and set its data-lesson-date attribute and value to previous_date
+                const previousDateElement = document.getElementById("previous_date");
+                previousDateElement.setAttribute("data-lesson-date", data.previous_date);
+                previousDateElement.querySelector("span").innerText = data.previous_date;
+
+                // same for next date
+                const nextDateElement = document.getElementById("next_date");
+                nextDateElement.setAttribute("data-lesson-date", data.next_date);
+                nextDateElement.querySelector("span").innerText = data.next_date;
+            }
             if (!data.scores || data.scores.length === 0) {
                 const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
                 checkboxes.forEach(checkbox => checkbox.checked = false);
