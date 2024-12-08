@@ -85,10 +85,10 @@ def attendance(class_id):
             data_manager.save_score(new_score)
         
         return redirect(url_for('select_class'))
-
+    class_name = data_manager.get_class_by_id(class_id)['name']
     students = data_manager.get_students_by_class(class_id)
     scores_labels = data_manager.load_score_labels()
-    return render_template('attendance.html', students=students, class_id=class_id, scores_labels=scores_labels)
+    return render_template('attendance.html', students=students, class_id=class_id, scores_labels=scores_labels, class_name=class_name)
 
 # route for attendance data. accepts a class id and a specific date. GET method. return json data
 @app.route('/attendance_data/<int:class_id>/<date>')
