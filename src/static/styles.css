@@ -35,3 +35,7 @@ body {
 .assigned_classes li:hover {
     background-color: #e0e0e0;
 }
+
+#scoresTable a {
+    text-decoration: none;
+}
