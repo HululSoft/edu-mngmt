@@ -98,5 +98,35 @@ class TestDataManager(unittest.TestCase):
         self.assertEqual(student['phone'], "123-456-7890")
         self.assertEqual(student['parent_phone'], "098-765-4321")
 
+    def test_add_new_student(self):
+        self.data_manager.add_new_student("Student C", 2, "2023-01-01", "123-456-7890", "098-765-4321")
+        self.assertIsNotNone(self.data_manager.get_student_by_id(3))
+
+    def test_add_new_teacher(self):
+        self.data_manager.add_new_teacher("Munir", "password1")
+        self.assertIsNotNone(self.data_manager.get_teacher_by_name("Munir"))
+
+    def test_add_new_class(self):
+        self.data_manager.add_new_class("History", 1)
+        cls = self.data_manager.get_classes_by_teacher(1)
+        self.assertIn("History", [c['name'] for c in cls])
+
+    # test deleting a student
+    def test_delete_student(self):
+        self.data_manager.delete_student(1)
+        # assert student becomes active: false
+        self.assertFalse(self.data_manager.get_student_by_id(1)['active'])
+
+    # test adding a student with the same name as an existing student
+    def test_add_student_same_name(self):
+        with self.assertRaises(ValueError):
+            self.data_manager.add_new_student("Student A", 2, "2023-01-01", "123-456-7890", "098-765-4321")
+
+    # test adding a deleted student, should reactivate the student
+    def test_add_deleted_student(self):
+        self.data_manager.delete_student(1)
+        self.data_manager.add_new_student("Student A", 1, "2023-01-01", "123-456-7890", "098-765-4321")
+        self.assertTrue(self.data_manager.get_student_by_id(1).get('active', True))
+
 if __name__ == '__main__':
     unittest.main()

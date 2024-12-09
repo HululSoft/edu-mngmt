@@ -11,10 +11,20 @@
 </head>
 <body>
     <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <h1>الصف: {{ class_name }}</h1>
+            </div>
+            <div class="col-md-2 text-start">
+                <button class="btn btn-outline-primary" type="button" onclick="openStudentForm()">
+                    <i class="bi bi-person-plus"></i>
+                    <span class="d-none d-sm-inline">اضافة طالب</span>
+                </button>
+            </div>
 
-        <h1 class="text-center">متابعة الحضور - {{ class_name }}</h1>
+        </div>
 
-        <div class="row d-flex justify-content-between">
+        <div class="row d-flex justify-content-between mt-4">
             <div class="col d-flex justify-content-between">
                 <div class="text-start" id="previous_date" data-lesson-date="{{ previous_date }}">
                     <button class="btn btn-outline-secondary">
@@ -31,36 +41,38 @@
                 </div>
             </div>
         </div>
+
         <form method="POST" action="{{ url_for('attendance', class_id=class_id) }}">
             <!-- Current Date -->
-            <div class="col text-center">
+            <div class="col text-center mt-2">
                 <input type="date" id="lesson_date" name="lesson_date" class="mb-2 p-2" required>
             </div>
 
             <table id="scoresTable" class="table table-bordered">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>اسم الطالب</th>
                         {% for score in scores_labels %}
                             <th>{{ score.label }}</th>
                         {% endfor %}
-                        <th>الإجراءات</th>
+
                     </tr>
                 </thead>
                 <tbody>
                     {% for student in students %}
                         <tr id="studentId_{{ student.id }}">
+                            <td>{{ loop.index }}</td>
                             <td><a href="{{ url_for('student', student_id=student.id) }}">{{ student.name }}</a></td>
                             {% for score in scores_labels %}
                                 <td><input type="checkbox" name="{{ score.name }}_{{ student.id }}"></td>
                             {% endfor %}
-                            <td><a href="{{ url_for('monthly_report', class_id=class_id, student_id=student.id) }}">عرض التقرير الشهري</a></td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
             <div class="actions text-center">
-                <input type="submit" class="btn btn-primary" value="تقديم الحضور">
+                <input type="submit" class="btn btn-primary" value="حفظ">
             </div>
         </form>
     </div>
@@ -78,6 +90,9 @@
         fetchAndUpdateAttendance(formattedDate);
     });
 
+    function openStudentForm() {
+        window.location.href = "{{ url_for('add_student') }}";
+    }
 
     // add event listener for lesson_date element when set or changed, to load attendance data for that date.
     document.getElementById("lesson_date").addEventListener("change", async function () {
@@ -87,6 +102,7 @@
     // add event listener for previous_date element when clicked, to load attendance data for that date.
     document.getElementById("previous_date").addEventListener("click", async function () {
         console.log("previous_date clicked");
+        if (this.querySelector("button").disabled) return;
         console.log("previous_date value:", this.getAttribute("data-lesson-date"));
         await fetchAndUpdateAttendance(this.getAttribute("data-lesson-date"));
     });
@@ -94,6 +110,8 @@
     // add event listener for next_date element when clicked, to load attendance data for that date.
     document.getElementById("next_date").addEventListener("click", async function () {
         console.log("next_date clicked");
+        // if disabled, do nothing
+        if (this.querySelector("button").disabled) return;
         console.log("next_date value:", this.getAttribute("data-lesson-date"));
         await fetchAndUpdateAttendance(this.getAttribute("data-lesson-date"));
     });
@@ -112,13 +130,24 @@
                 console.log("Fetched attendance data:", data);
                 // get previous_date_element and set its data-lesson-date attribute and value to previous_date
                 const previousDateElement = document.getElementById("previous_date");
-                previousDateElement.setAttribute("data-lesson-date", data.previous_date);
-                previousDateElement.querySelector("span").innerText = data.previous_date;
+                if (data.previous_date) {
+                    previousDateElement.querySelector("button").disabled = false;
+                    previousDateElement.setAttribute("data-lesson-date", data.previous_date);
+                    previousDateElement.querySelector("span").innerText = data.previous_date;
+                } else {
+                    previousDateElement.querySelector("span").innerText = "";
+                    previousDateElement.querySelector("button").disabled = true;
+                }
 
-                // same for next date
                 const nextDateElement = document.getElementById("next_date");
-                nextDateElement.setAttribute("data-lesson-date", data.next_date);
-                nextDateElement.querySelector("span").innerText = data.next_date;
+                if (data.next_date) {
+                    nextDateElement.querySelector("button").disabled = false;
+                    nextDateElement.setAttribute("data-lesson-date", data.next_date);
+                    nextDateElement.querySelector("span").innerText = data.next_date;
+                } else {
+                    nextDateElement.querySelector("span").innerText = "";
+                    nextDateElement.querySelector("button").disabled = true;
+                }
             }
             if (!data.scores || data.scores.length === 0) {
                 const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
