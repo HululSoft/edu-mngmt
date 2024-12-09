@@ -127,6 +127,7 @@ def monthly_report(class_id, student_id):
 
 
 @app.route('/remove_class/<int:teacher_id>/<int:class_id>')
+@login_required
 def remove_class(teacher_id, class_id):
     data_manager.unassign_class_from_teacher(teacher_id, class_id)
     return redirect(url_for('admin'))
@@ -134,12 +135,14 @@ def remove_class(teacher_id, class_id):
 
 
 @app.route('/add_class/<int:teacher_id>/<int:class_id>')
+@login_required
 def add_class(teacher_id, class_id):
     # Add the class to the teacher's classes
     data_manager.assign_class_to_teacher(teacher_id, class_id)
     return redirect(url_for('admin'))
 
 @app.route('/add_teacher', methods=['POST'])
+@login_required
 def add_teacher():
     teacher_name = request.form['teacher_name']
     password = request.form['teacher_password']
@@ -148,6 +151,7 @@ def add_teacher():
 
 # route for add new class
 @app.route('/add_new_class', methods=['POST'])
+@login_required
 def add_new_class():
     class_name = request.form['class_name']
     # get the teacher id from the form as integer
@@ -155,12 +159,6 @@ def add_new_class():
     data_manager.add_new_class(class_name, assigned_teacher)
     return redirect(url_for('admin'))
 
-# route for add new student
-@app.route('/add_new_student/<int:class_id>', methods=['POST'])
-def add_new_student(class_id):
-    student_name = request.form['student_name']
-    data_manager.add_new_student(student_name, class_id)
-    return redirect(url_for('attendance', class_id=class_id))
 
 # route for showing student info. accepts student id
 @app.route('/student/<int:student_id>')
@@ -171,8 +169,28 @@ def student(student_id):
     return render_template('student.html', student=student, classes=classes)
 
 
+@app.route('/students/new', methods=['GET', 'POST'])
+@login_required
+def add_student():
+    classes = data_manager.get_classes_by_teacher(session['teacher_id'])
+    if request.method == 'GET':
+        return render_template('student.html', classes=classes, student={})
+    student_name = request.form['name']
+    class_id = int(request.form['class'])
+    phone_number = request.form['phone']
+    parent_number = request.form['parent_phone']
+    join_date = request.form['date_joined']
+    try:
+        data_manager.add_new_student(student_name, class_id, phone_number, parent_number, join_date)
+    except Exception as e:
+        print(e)
+        return render_template('student.html', error=str(e), student=request.form, classes=classes), 400
+    return redirect(url_for('attendance', class_id=class_id))
+
+
 # route for update_student. it accepts FormData for a student id
 @app.route('/update_student/<int:student_id>', methods=['POST'])
+@login_required
 def update_student(student_id):
     student_name = request.form['name']
     class_id = int(request.form['class'])
@@ -181,10 +199,18 @@ def update_student(student_id):
     join_date = request.form['date_joined']
     try:
         data_manager.update_student(student_id, student_name, class_id, phone_number, parent_number, join_date)
-        return jsonify({'message': 'Student updated successfully'}), 200
+        return redirect(url_for('attendance', class_id=class_id))
     except Exception as e:
         print(e)
-        return jsonify({'message': f'Error updating student: {str(e)}'}), 400
+        return render_template('student.html', error=str(e), student=request.form)
+
+
+# route for delete_student. it accepts student id and class id
+@app.route('/delete_student/<int:student_id>/<int:class_id>')
+@login_required
+def delete_student(student_id, class_id):
+    data_manager.delete_student(student_id)
+    return redirect(url_for('attendance', class_id=class_id))
 
 
 

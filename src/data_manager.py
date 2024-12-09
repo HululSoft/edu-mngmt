@@ -45,14 +45,23 @@ class DataManager:
             if student['id'] == student_id:
                 return student
         return None  # Return None if no matching student is found
-        
+    def get_student_by_name(self, student_name):
+        # Load students data from the students JSON file
+        with open(self.students_file, 'r',encoding='utf-8') as file:
+            students = json.load(file)
+
+        # Find and return the student data by matching the name
+        for student in students:
+            if student['name'] == student_name:
+                return student
+        return None
     def get_students_by_class(self, class_id):
         # Load students data from the students JSON file
         with open(self.students_file, 'r',encoding='utf-8') as file:
             students = json.load(file)
         
-        # Filter and return the list of students that match the class_id
-        class_students = [student for student in students if student['class_id'] == class_id]
+        # Filter and return the list of students that match the class_id and has no active: false
+        class_students = [student for student in students if student['class_id'] == class_id and student.get('active', True)]
         return class_students
         
     def get_classes_by_teacher(self, teacher_id):
@@ -244,39 +253,42 @@ class DataManager:
         with open(self.classes_file, 'w', encoding='utf-8') as file:
             json.dump(classes, file, indent=4, ensure_ascii=False)
 
-    def add_new_student(self, student_name:str, class_id:int):
-        # Load the current list of students
-        with open(self.students_file, 'r', encoding='utf-8') as file:
-            students = json.load(file)
+    def add_new_student(self, student_name: str, class_id: int, phone_number, parent_number, date_joined):
 
-        # validate student name is not empty and does not already exist in the class
         if not student_name:
             raise ValueError("Student name cannot be empty.")
-        if any(student['name'] == student_name and student['class_id'] == class_id for student in students):
-            raise ValueError(f"Student with name '{student_name}' already exists in the class.")
+        student = self.get_student_by_name(student_name)
+        if student:
+            if student.get('active', True):
+                raise ValueError(f"Student with name '{student_name}' already exists in the class.")
+            else:
+                self.update_student(student['id'], student_name, class_id, phone_number, parent_number, date_joined)
+        else:
+            # Find the maximum student ID
+            with open(self.students_file, 'r', encoding='utf-8') as file:
+                students = json.load(file)
+            max_student_id = max([student['id'] for student in students], default=0)
 
-        # Find the maximum student ID
-        max_student_id = max([student['id'] for student in students], default=0)
+            students.append({
+                'id': max_student_id + 1,
+                'name': student_name,
+                'class_id': class_id,
+                'phone': phone_number,
+                'parent_phone': parent_number,
+                'date_joined': date_joined
+            })
 
-        # Create a new student dictionary
-        new_student = {
-            'id': max_student_id + 1,
-            'name': student_name,
-            'class_id': class_id
-        }
-
-        # Append the new student to the list
-        students.append(new_student)
-
-        # Save the updated list of students back to the file
-        with open(self.students_file, 'w', encoding='utf-8') as file:
-            json.dump(students, file, indent=4, ensure_ascii=False)
+            with open(self.students_file, 'w', encoding='utf-8') as file:
+                json.dump(students, file, indent=4, ensure_ascii=False)
 
     def update_student(self, student_id, student_name, class_id, phone_number, parent_number, join_date):
         # Load the current list of students
         with open(self.students_file, 'r', encoding='utf-8') as file:
             students = json.load(file)
 
+        # validation: if student name already exists with different id, raise error
+        if any(student['name'] == student_name and student['id'] != student_id for student in students):
+            raise ValueError(f"Student with name '{student_name}' already exists.")
         # Find the student to update by matching the student_id
         for student in students:
             if student['id'] == student_id:
@@ -286,6 +298,24 @@ class DataManager:
                 student['phone'] = phone_number
                 student['parent_phone'] = parent_number
                 student['date_joined'] = join_date
+                student.pop('active', None)
+                student.pop('inactive_date', None)
+                break
+
+        # Save the updated list of students back to the file
+        with open(self.students_file, 'w', encoding='utf-8') as file:
+            json.dump(students, file, indent=4, ensure_ascii=False)
+
+    def delete_student(self, student_id):
+        # Load the current list of students
+        with open(self.students_file, 'r', encoding='utf-8') as file:
+            students = json.load(file)
+
+        # Find the student and set state: inactive
+        for student in students:
+            if student['id'] == student_id:
+                student['active'] = False
+                student['inactive_date'] = datetime.now().strftime('%Y-%m-%d')
                 break
 
         # Save the updated list of students back to the file

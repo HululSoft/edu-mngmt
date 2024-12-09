@@ -5,24 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تعديل معلومات الطالب</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body>
 <div class="container mt-5">
-    <h2 class="mb-4">تعديل معلومات الطالب</h2>
+    <h1 class="mb-4">معلومات الطالب</h1>
 
-    <!-- Alert Placeholder -->
-    <div id="alertPlaceholder"></div>
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+    {% if not student.get('active', True) %}
+    <div class="alert alert-warning">
+        تم حذف هذا الطالب بتاريخ {{ student.get('inactive_date') }}
+    </div>
+    {% endif %}
 
     <form id="studentForm">
         <div class="mb-3">
             <label for="studentName" class="form-label">اسم الطالب</label>
-            <input type="text" class="form-control" id="studentName" name="name" value="{{ student.name }}" placeholder="أدخل اسم الطالب">
+            <input type="text" class="form-control" id="studentName" name="name" value="{{ student.get('name', '') }}" placeholder="أدخل اسم الطالب" required>
         </div>
         <div class="mb-3">
             <label for="studentClass" class="form-label">الصف</label>
             <select class="form-select" id="studentClass" name="class">
                 {% for class in classes %}
-                <option value="{{ class.id }}" {% if student.class_id == class.id %}selected{% endif %}>
+                <option value="{{ class.id }}" {% if student.get('class_id') == class.id %}selected{% endif %}>
                     {{ class.name }}
                 </option>
                 {% endfor %}
@@ -30,19 +40,38 @@
         </div>
         <div class="mb-3">
             <label for="joinDate" class="form-label">تاريخ الالتحاق</label>
-            <input type="date" class="form-control" id="joinDate" name="date_joined" value="{{ student.date_joined }}">
+            <input type="date" class="form-control" id="joinDate" name="date_joined" value="{{ student.get('date_joined', '') }}">
         </div>
         <div class="mb-3">
             <label for="phoneNumber" class="form-label">رقم الهاتف</label>
-            <input type="tel" class="form-control" id="phoneNumber" name="phone" value="{{ student.phone }}" placeholder="أدخل رقم الهاتف">
+            <input type="tel" class="form-control" id="phoneNumber" name="phone" value="{{ student.get('phone', '') }}" placeholder="أدخل رقم الهاتف">
         </div>
         <div class="mb-3">
             <label for="parentPhoneNumber" class="form-label">رقم هاتف ولي الأمر</label>
-            <input type="tel" class="form-control" id="parentPhoneNumber" name="parent_phone" value="{{ student.parent_phone }}" placeholder="أدخل رقم هاتف ولي الأمر">
+            <input type="tel" class="form-control" id="parentPhoneNumber" name="parent_phone" value="{{ student.get('parent_phone', '') }}" placeholder="أدخل رقم هاتف ولي الأمر">
         </div>
         <div class="d-flex justify-content-between">
-            <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
-<!--            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">حذف الطالب</button>-->
+            <button type="submit" class="btn btn-primary">
+                {% if student.get('id') %}
+                حفظ التغييرات
+                {% else %}
+                إضافة طالب جديد
+                {% endif %}
+            </button>
+            {% if student.get('id') %}
+            <button type="button" class="btn btn-info">
+                <a href="{{ url_for('monthly_report', class_id=student.get('class_id'), student_id=student.id) }}" style="text-decoration: none; color: white;">
+                    <i class="bi bi-clipboard2-check"></i>
+                    إنشاء تقرير
+                </a>
+            </button>
+            {% endif %}
+            {% if student.get('id') %}
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="bi bi-person-dash"></i>
+                حذف الطالب
+            </button>
+            {% endif %}
         </div>
     </form>
 </div>
@@ -59,45 +88,27 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <a href="/delete_student/{{ student.id }}" class="btn btn-danger">حذف</a>
+                <a href="/delete_student/{{ student.id }}/{{ student.class_id }}" class="btn btn-danger">حذف الطالب</a>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Handle form submission
     document.getElementById('studentForm').addEventListener('submit', async function (e) {
         e.preventDefault();
-
-        const formData = new FormData(this);
-        const response = await fetch(`/update_student/{{ student.id }}`, {
-            method: 'POST',
-            body: formData,
-        });
-
-        const alertPlaceholder = document.getElementById('alertPlaceholder');
-        alertPlaceholder.innerHTML = ''; // Clear existing alerts
-
-        if (response.ok) {
-            const result = await response.json();
-            showAlert('success', result.message);
+        console.log('student id: {{ student.get("id") }}');
+        if ('{{ student.get("id") }}' > 0) {
+            this.action = `/update_student/{{ student.id }}`;
         } else {
-            const error = await response.json();
-            showAlert('danger', error.message);
+            this.action = '/students/new';
         }
+        this.method = 'POST';
+        this.submit();
+
     });
 
-    // Function to show alerts
-    function showAlert(type, message) {
-        const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
-            </div>`;
-        document.getElementById('alertPlaceholder').innerHTML = alertHtml;
-    }
 </script>
 </body>
 </html>
