@@ -37,23 +37,22 @@
             padding: 0; 
         }
         
-        li { 
+        li {
+            cursor: pointer;
             margin-bottom: 15px; 
             padding: 15px; 
             background-color: #f9fafc; 
             border-radius: 6px; 
-            transition: box-shadow 0.3s ease; 
+            transition: box-shadow 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            color: #0d5bae;
         }
         
         li:hover { 
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
         }
-        
-        .actions { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
+
         
         .actions span { 
             font-size: 1.1em; 
@@ -61,20 +60,10 @@
             color: #34495e; 
         }
         
-        a { 
-            text-decoration: none; 
-            color: #007bff; 
-            font-weight: bold; 
-            padding: 8px 12px; 
-            border-radius: 5px; 
-            background-color: #e9f5ff; 
-            transition: background-color 0.3s ease, color 0.3s ease; 
+        a {
+
         }
-        
-        a:hover { 
-            color: #fff; 
-            background-color: #007bff; 
-        }
+
     </style>
 </head>
 <body>
@@ -83,13 +72,8 @@
         <p>مرحبًا، {{ teacher_name }}! اختر صفًا أدناه لتقديم الحضور أو عرض التقارير.</p>
         <ul>
             {% for class in classes %}
-                <li>
-                    <div class="actions">
+                <li class="classes" onclick="window.location.href='{{ url_for('attendance', class_id=class.id) }}'">
                         <span>{{ class.name }}</span>
-                        <div>
-                            <a href="{{ url_for('attendance', class_id=class.id) }}">متابعة الحضور</a>
-                        </div>
-                    </div>
                 </li>
             {% endfor %}
         </ul>
