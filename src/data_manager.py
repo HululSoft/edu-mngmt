@@ -89,7 +89,10 @@ class DataManager:
             scores = json.load(file)
 
         month_start = datetime(int(year), int(month), 1)
-        next_month = month_start.replace(month=month_start.month % 12 + 1)
+        if month_start.month == 12:
+            next_month = month_start.replace(year=month_start.year + 1, month=1)
+        else:
+            next_month = month_start.replace(month=month_start.month + 1)
         month_end = next_month.replace(day=1)
 
         return [
