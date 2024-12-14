@@ -39,19 +39,15 @@ jobs:
         sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@$DEPLOY_SERVER_HOST \
         "cd /tmp/hulul-app && docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG ."
 
-    - name: Stop and Run Docker Container
+    - name: Update Docker Image in docker-compose.yml and Deploy
       env:
         SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
         DEPLOY_SERVER_HOST: ${{ vars.DEPLOYMENT_SERVER_HOST }}
         DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
         DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
-        DOCKER_CONTAINER_NAME: ${{ env.DOCKER_CONTAINER_NAME }}
       run: |
         sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@$DEPLOY_SERVER_HOST "
-        if docker ps -q --filter 'name=$DOCKER_CONTAINER_NAME' | grep -q .; then
-          echo 'Stopping existing container...'
-          docker stop $DOCKER_CONTAINER_NAME && docker rm $DOCKER_CONTAINER_NAME
-        fi
-        echo 'Starting new container...'
-        docker run -d --name $DOCKER_CONTAINER_NAME -p 5000:5000 -v /var/lib/$DOCKER_CONTAINER_NAME/data:/app/data $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG 
-        "  
+        echo 'Updating docker-compose.yml...'
+        sed -i '/student-reports:/,/image:/s|image:.*|image: $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG|' /home/ubuntu/docker/docker-compose.yaml
+        echo 'Deploying with docker compose...'
+        cd /home/ubuntu/docker && docker compose up -d student-reports
