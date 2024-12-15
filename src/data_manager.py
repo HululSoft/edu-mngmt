@@ -108,7 +108,7 @@ class DataManager:
         if include_adjacent_dates:
             previous_date = next_date = None
             # extract dates in a set. sort the set by date, and get the dates preceding and following lesson_date
-            lesson_dates = set([score["lesson_date"] for score in scores])
+            lesson_dates = set([score["lesson_date"] for score in scores if score['class_id'] == class_id])
             if lesson_date not in lesson_dates:
                 lesson_dates.add(lesson_date)
             lesson_dates = sorted(lesson_dates,  key=lambda x: datetime.strptime(x, '%Y-%m-%d'))
