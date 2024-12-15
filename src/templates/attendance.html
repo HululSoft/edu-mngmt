@@ -160,11 +160,11 @@
             data.scores.forEach(studentScores => {
                 const studentRow = document.querySelector(`tr[id="studentId_${studentScores.student_id}"]`);
                 if (!studentRow) return;
-
-                Object.keys(studentScores).forEach(prop => {
+                scores = studentScores.scores
+                Object.keys(scores).forEach(prop => {
                     const scoreCheckbox = studentRow.querySelector(`input[name="${prop}_${studentScores.student_id}"]`);
                     if (scoreCheckbox) {
-                        scoreCheckbox.checked = Boolean(studentScores[prop]);
+                        scoreCheckbox.checked = Boolean(scores[prop]);
                     }
                 });
             });

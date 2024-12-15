@@ -1,6 +1,0 @@
-[
-    { "id": 1, "name": "attendance", "label": "الحضور" },
-    { "id": 2, "name": "time", "label": "الالتزام بالوقت" },
-    { "id": 3, "name": "uniform", "label": "اللباس الموحد" },
-	{ "id": 4, "name": "praactipate", "label": "المشاركة" }
-]

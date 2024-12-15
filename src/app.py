@@ -1,14 +1,25 @@
 import base64
 import os
 from functools import wraps
-
-from flask import Flask, request, render_template, redirect, url_for, session, jsonify
-
+import json
+from datetime import date 
+from flask import Flask, request, render_template, redirect, url_for, session, jsonify ,Response
+from models import db, Student, Class, Teacher, ClassTeacher
 from data_manager import DataManager
 
 app = Flask(__name__)
+
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['DB_SCHEMA'] = os.getenv('DB_SCHEMA', 'school_management')  # Default schema
+
 app.secret_key = 'supersecretkey'
-data_manager = DataManager(os.path.join(os.path.dirname(__file__), 'data'))
+
+# Initialize the database
+db.init_app(app)
+
+data_manager = DataManager(db.session)
 
 
 def login_required(f):
@@ -29,7 +40,9 @@ def index():
 def admin():
     teachers = data_manager.load_teachers()
     classes = data_manager.load_classes()
-    return render_template('management.html', teachers=teachers, classes=classes)
+    teachers_with_assigned_classes = data_manager.get_teachers_with_assigned_classes()
+    
+    return render_template('management.html', teachers=teachers, classes=classes,teachers_with_assigned_classes=teachers_with_assigned_classes)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

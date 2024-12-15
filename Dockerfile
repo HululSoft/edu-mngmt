@@ -7,8 +7,6 @@ WORKDIR /app
 # Copy the application code to the container
 COPY src /app
 
-# Copy the default data folder into the container
-COPY src/data /default-data
 
 COPY gunicorn.conf.py /app
 
