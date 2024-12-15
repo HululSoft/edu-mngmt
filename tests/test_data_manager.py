@@ -30,11 +30,30 @@ class TestDataManager(unittest.TestCase):
             {"id": 2, "name": "Student B", "class_id": 2}
         ]
         self.sample_scores = [
-            {"student_id": 1, "lesson_date": "2023-01-01", "score": 90},
-            {"student_id": 2, "lesson_date": "2023-01-01", "score": 85}
+            {
+                "student_id": 1,
+                "lesson_date": "2024-12-14",
+                "class_id": 1,
+                "attendance": "false",
+                "time": "false",
+                "uniform": "false",
+                "praactipate": "false"
+            },
+            {
+                "student_id": 2,
+                "lesson_date": "2024-12-14",
+                "class_id": 2,
+                "attendance": "false",
+                "time": "false",
+                "uniform": "false",
+                "praactipate": "false"
+            }
         ]
         self.sample_scores_labels = [
-            {"name": "score", "description": "Test Score"}
+            { "id": 1, "name": "attendance", "label": "الحضور" },
+            { "id": 2, "name": "time", "label": "الالتزام بالوقت" },
+            { "id": 3, "name": "uniform", "label": "اللباس الموحد" },
+            { "id": 4, "name": "praactipate", "label": "المشاركة" }
         ]
 
         with open(self.teachers_file, 'w', encoding='utf-8') as file:
@@ -127,6 +146,10 @@ class TestDataManager(unittest.TestCase):
         self.data_manager.delete_student(1)
         self.data_manager.add_new_student("Student A", 1, "2023-01-01", "123-456-7890", "098-765-4321")
         self.assertTrue(self.data_manager.get_student_by_id(1).get('active', True))
+
+    def test_get_scores(self):
+        scores_dict = self.data_manager.get_scores_by_date("2024-12-14", 1)
+        self.assertEqual(len(scores_dict['scores']), 1)
 
 if __name__ == '__main__':
     unittest.main()

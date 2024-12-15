@@ -117,10 +117,10 @@ class DataManager:
                 previous_date = lesson_dates[lesson_date_index - 1]
             if lesson_date_index + 1 < len(lesson_dates):
                 next_date = lesson_dates[lesson_date_index + 1]
-            return dict(scores=[score for score in scores if score['lesson_date'] == lesson_date],
+            return dict(scores=[score for score in scores if score['lesson_date'] == lesson_date and score['class_id'] == class_id],
                           previous_date=previous_date, next_date=next_date)
         else:
-             return dict(scores=[score for score in scores if score['lesson_date'] == lesson_date])
+             return dict(scores=[score for score in scores if score['lesson_date'] == lesson_date and score['class_id'] == class_id])
     def save_score(self, score_data):
         try:
             # Open the file in read mode first to load existing scores
