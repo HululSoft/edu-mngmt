@@ -47,6 +47,33 @@ class TestDataManager(unittest.TestCase):
                 "time": "false",
                 "uniform": "false",
                 "praactipate": "false"
+            },
+            {
+                "student_id": 1,
+                "lesson_date": "2024-12-15",
+                "class_id": 1,
+                "attendance": "false",
+                "time": "false",
+                "uniform": "false",
+                "praactipate": "false"
+            },
+            {
+                "student_id": 1,
+                "lesson_date": "2024-12-10",
+                "class_id": 1,
+                "attendance": "false",
+                "time": "false",
+                "uniform": "false",
+                "praactipate": "false"
+            },
+            {
+                "student_id": 2,
+                "lesson_date": "2024-12-16",
+                "class_id": 2,
+                "attendance": "false",
+                "time": "false",
+                "uniform": "false",
+                "praactipate": "false"
             }
         ]
         self.sample_scores_labels = [
@@ -150,6 +177,12 @@ class TestDataManager(unittest.TestCase):
     def test_get_scores(self):
         scores_dict = self.data_manager.get_scores_by_date("2024-12-14", 1)
         self.assertEqual(len(scores_dict['scores']), 1)
+
+    def test_get_scores_adjacent_dates(self):
+        scores_dict = self.data_manager.get_scores_by_date("2024-12-14", 1, include_adjacent_dates=True)
+        self.assertEqual(len(scores_dict['scores']), 1)
+        self.assertEqual(scores_dict['previous_date'], "2024-12-10")
+        self.assertEqual(scores_dict['next_date'], "2024-12-15")
 
 if __name__ == '__main__':
     unittest.main()
