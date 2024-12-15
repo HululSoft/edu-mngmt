@@ -184,5 +184,10 @@ class TestDataManager(unittest.TestCase):
         self.assertEqual(scores_dict['previous_date'], "2024-12-10")
         self.assertEqual(scores_dict['next_date'], "2024-12-15")
 
+        scores_dict = self.data_manager.get_scores_by_date("2024-12-10", 1, include_adjacent_dates=True)
+        self.assertEqual(len(scores_dict['scores']), 1)
+        self.assertIsNone(scores_dict['previous_date'])
+
+
 if __name__ == '__main__':
     unittest.main()
