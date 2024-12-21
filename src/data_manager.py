@@ -1,11 +1,10 @@
 import base64
+import calendar
 import json
 from datetime import datetime
-import calendar
-from models import db, Class, Teacher, ClassTeacher, Student,Score,Criteria
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import joinedload
+from models import Class, Teacher, ClassTeacher, Student, Score, Criteria
+
 
 class DataManager:
     def __init__(self,db_session):
@@ -247,12 +246,14 @@ class DataManager:
                 previous_date = next_date = None
 
                 # Locate the current lesson_date in the sorted list
-                if lesson_date_obj in all_dates:
-                    lesson_date_index = all_dates.index(lesson_date_obj)
-                    if lesson_date_index > 0:
-                        previous_date = all_dates[lesson_date_index - 1].isoformat()
-                    if lesson_date_index + 1 < len(all_dates):
-                        next_date = all_dates[lesson_date_index + 1].isoformat()
+                if lesson_date_obj not in all_dates:
+                    all_dates.append(lesson_date_obj)
+                    all_dates.sort()
+                lesson_date_index = all_dates.index(lesson_date_obj)
+                if lesson_date_index > 0:
+                    previous_date = all_dates[lesson_date_index - 1].isoformat()
+                if lesson_date_index + 1 < len(all_dates):
+                    next_date = all_dates[lesson_date_index + 1].isoformat()
 
                 return {
                     "scores": scores,
