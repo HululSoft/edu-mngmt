@@ -39,3 +39,9 @@ body {
 #scoresTable a {
     text-decoration: none;
 }
+
+#blur-overlay {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px); /* For Safari */
+    z-index: 1050; /* Ensure it appears above other content */
+}

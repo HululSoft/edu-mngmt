@@ -10,6 +10,11 @@
     <title>تقديم الحضور</title>
 </head>
 <body>
+    <div id="blur-overlay" class="d-flex justify-content-center align-items-center position-fixed top-0 start-0 w-100 h-100">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
     <div class="container-fluid">
         <div class="row">
             <div class="col">
@@ -42,7 +47,7 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ url_for('attendance', class_id=class_id) }}">
+        <form method="POST" action="{{ url_for('attendance', class_id=class_id) }}" id="attendanceForm">
             <!-- Current Date -->
             <div class="col text-center mt-2">
                 <input type="date" id="lesson_date" name="lesson_date" class="mb-2 p-2" required>
@@ -88,8 +93,26 @@
         
         // Set the default value of the date input field
         document.getElementById("lesson_date").value = formattedDate;
+        document.getElementById("attendanceForm").addEventListener("submit", saveAttendance);
         fetchAndUpdateAttendance(formattedDate);
     });
+
+    async function saveAttendance(e) {
+        e.preventDefault();
+        const formData = new FormData(document.getElementById("attendanceForm"));
+        try {
+            showBlurOverlay();
+            // Send the form data to the server
+            await fetch(document.getElementById("attendanceForm").action, {
+                method: "POST",
+                body: formData
+            })
+        } catch (error) {
+            console.error("Error saving attendance:", error);
+        } finally {
+            hideBlurOverlay();
+        }
+    }
 
     function openStudentForm() {
         window.location.href = "{{ url_for('add_student') }}";
@@ -119,6 +142,7 @@
 
     async function fetchAndUpdateAttendance(lessonDate) {
         try {
+            showBlurOverlay();
             // Fetch attendance data for the selected date and class
             const response = await fetch(`/attendance_data/{{ class_id }}/${lessonDate}`);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -170,8 +194,23 @@
             });
         } catch (error) {
             console.error("Error fetching or processing attendance data:", error);
+        } finally {
+            hideBlurOverlay();
         }
     }
+
+    function showBlurOverlay() {
+        document.getElementById('blur-overlay').classList.add('d-flex');
+        document.getElementById('blur-overlay').classList.remove('d-none');
+    }
+
+    // Function to hide the blur overlay
+    function hideBlurOverlay() {
+        document.getElementById('blur-overlay').classList.remove('d-flex');
+        document.getElementById('blur-overlay').classList.add('d-none');
+    }
+
+
 
 </script>
 </html>
