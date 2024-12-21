@@ -1,11 +1,9 @@
 import base64
 import os
 from functools import wraps
-import json
-from datetime import date 
-from flask import Flask, request, render_template, redirect, url_for, session, jsonify ,Response
-from models import db, Student, Class, Teacher, ClassTeacher
+from flask import Flask, request, render_template, redirect, url_for, session, jsonify
 from data_manager import DataManager
+from models import db
 
 app = Flask(__name__)
 
@@ -218,11 +216,18 @@ def update_student(student_id):
         return render_template('student.html', error=str(e), student=request.form)
 
 
+#rote to activate a student. accepts student id
+@app.route('/activate_student/<int:student_id>/<int:class_id>')
+@login_required
+def activate_student(student_id, class_id):
+    data_manager.set_student_active(student_id, True)
+    return redirect(url_for('attendance', class_id=class_id))
+
 # route for delete_student. it accepts student id and class id
 @app.route('/delete_student/<int:student_id>/<int:class_id>')
 @login_required
 def delete_student(student_id, class_id):
-    data_manager.delete_student(student_id)
+    data_manager.set_student_active(student_id, False)
     return redirect(url_for('attendance', class_id=class_id))
 
 

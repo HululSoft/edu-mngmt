@@ -569,37 +569,24 @@ class DataManager:
         existing_student = self.db_session.query(Student).filter_by(name=student_name).first()
 
         try:
-            if existing_student:
-                if existing_student.active:
-                    raise ValueError(f"Student with name '{student_name}' already exists in the class.")
-                else:
-                    # Update the existing student record
-                    existing_student.class_id = class_id
-                    existing_student.phone = phone_number
-                    existing_student.parent_phone = parent_number
-                    existing_student.date_joined = date_joined
-                    existing_student.active = True
-                    existing_student.inactive_date = None
-                    self.db_session.commit()
-                    return {"status": "success", "message": f"Student '{student_name}' reactivated and updated."}
-            else:
-                # Add a new student record
-                new_student = Student(
-                    name=student_name,
-                    class_id=class_id,
-                    phone=phone_number,
-                    parent_phone=parent_number,
-                    date_joined=date_joined,
-                    active=True
-                )
-                self.db_session.add(new_student)
-                self.db_session.commit()
-                return {"status": "success", "message": f"Student '{student_name}' added successfully."}
+            # Add a new student record
+            new_student = Student(
+                name=student_name,
+                class_id=class_id,
+                phone=phone_number,
+                parent_phone=parent_number,
+                date_joined=datetime.strptime(date_joined, "%Y-%m-%d") if date_joined else None,
+                active=True
+            )
+            self.db_session.add(new_student)
+            self.db_session.commit()
+            return {"status": "success", "message": f"Student '{student_name}' added successfully."}
         except SQLAlchemyError as e:
             self.db_session.rollback()  # Rollback transaction in case of error
-            return {"status": "error", "message": f"Database error: {str(e)}"}
+            raise ValueError("Database error: Unable to add student. Please try again later, or contact support.")
+
         
-    def update_student(self, student_id, student_name, class_id, phone_number, parent_number, join_date):
+    def update_student(self, student_id, student_name, class_id, phone_number, parent_number, join_date, active=True):
         """
         Update a student's details in the database.
         """
@@ -623,23 +610,22 @@ class DataManager:
             student.class_id = class_id
             student.phone = phone_number
             student.parent_phone = parent_number
-            student.date_joined = join_date
-            student.active = True  # Optional: Remove if active status is not relevant
+            student.date_joined = datetime.strptime(join_date, "%Y-%m-%d") if join_date else None
+            student.active = active
             
             # Commit the changes to the database
             self.db_session.commit()
             return {"status": "success", "message": f"Student '{student_name}' updated successfully."}
         except ValueError as e:
             self.db_session.rollback()  # Rollback transaction in case of a validation error
-            return {"status": "error", "message": str(e)}
+            raise ValueError(str(e))
         except SQLAlchemyError as e:
             self.db_session.rollback()  # Rollback transaction in case of a database error
-            return {"status": "error", "message": f"Database error: {str(e)}"}
+            raise ValueError("Database error: Unable to update student. Please try again later, or contact support.")
 
-
-    def delete_student(self, student_id):
+    def set_student_active(self, student_id, active=True):
         """
-        Mark a student as inactive in the database.
+        Activate a student in the database.
         """
         try:
             # Find the student by ID
@@ -647,15 +633,14 @@ class DataManager:
             if not student:
                 return {"status": "error", "message": f"Student with ID {student_id} does not exist."}
 
-            # Update the student's active status and set the inactive date
-            student.active = False
-            student.inactive_date = datetime.now()
+            student.active = active
+            student.inactive_date = None if active else datetime.now()
             self.db_session.commit()
 
-            return {"status": "success", "message": f"Student with ID {student_id} marked as inactive."}
+            return {"status": "success", "message": f"Student with ID {student_id} marked as {'active' if active else 'inactive'}."}
         except SQLAlchemyError as e:
-            self.db_session.rollback()  # Rollback transaction in case of error
-            return {"status": "error", "message": f"Database error: {str(e)}"}
+            self.db_session.rollback()
+            raise ValueError(f"Database error. Unable to mark student as {'active' if active else 'inactive'}. Please try again later.")
 
 def count_fridays(year: str, month: str) -> int:
     year = int(year)

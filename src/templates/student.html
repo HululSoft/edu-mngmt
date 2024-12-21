@@ -67,10 +67,18 @@
             </button>
             {% endif %}
             {% if student.get('id') %}
+            {% if student.get('active', True) %}
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
                 <i class="bi bi-person-dash"></i>
                 حذف الطالب
             </button>
+            {% else %}
+            <button type="button" class="btn btn-success">
+                <a href="/activate_student/{{ student.id }}/{{ student.class_id }}" style="text-decoration: none; color: white;">
+                    <i class="bi bi-person-plus"></i>
+                    إعادة تفعيل الطالب
+                </a>
+            {% endif %}
             {% endif %}
         </div>
     </form>
