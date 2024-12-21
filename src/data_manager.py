@@ -60,25 +60,6 @@ class DataManager:
             }
         return None
     
-    def get_student_by_name(self, student_name):
-        """
-        Get a student by their name from the database.
-        """
-        # Query the database for a student with the given name
-        student = self.db_session.query(Student).filter_by(name=student_name).first()
-        if student:
-            return {
-                'id': student.id,
-                'name': student.name,
-                'class_id': student.class_id,
-                'phone': student.phone,
-                'parent_phone': student.parent_phone,
-                'date_joined': student.date_joined.isoformat() if student.date_joined else None,
-                'active': student.active,
-                'inactive_date': student.inactive_date.isoformat() if student.inactive_date else None
-            }
-        return None
-    
     def get_students_by_class(self, class_id):
         """
         Get all active students for a specific class ID from the database.

@@ -40,15 +40,15 @@
         </div>
         <div class="mb-3">
             <label for="joinDate" class="form-label">تاريخ الالتحاق</label>
-            <input type="date" class="form-control" id="joinDate" name="date_joined" value="{{ student.get('date_joined', '') }}">
+            <input type="date" class="form-control" id="joinDate" name="date_joined" value="{{ student.date_joined if student.date_joined else '' }}">
         </div>
         <div class="mb-3">
             <label for="phoneNumber" class="form-label">رقم الهاتف</label>
-            <input type="tel" class="form-control" id="phoneNumber" name="phone" value="{{ student.get('phone', '') }}" placeholder="أدخل رقم الهاتف">
+            <input type="tel" class="form-control" id="phoneNumber" name="phone" value="{{ student.phone if student.phone else '' }}" placeholder="أدخل رقم الهاتف">
         </div>
         <div class="mb-3">
             <label for="parentPhoneNumber" class="form-label">رقم هاتف ولي الأمر</label>
-            <input type="tel" class="form-control" id="parentPhoneNumber" name="parent_phone" value="{{ student.get('parent_phone', '') }}" placeholder="أدخل رقم هاتف ولي الأمر">
+            <input type="tel" class="form-control" id="parentPhoneNumber" name="parent_phone" value="{{ student.parent_phone if student.parent_phone else '' }}" placeholder="أدخل رقم هاتف ولي الأمر">
         </div>
         <div class="d-flex justify-content-between">
             <button type="submit" class="btn btn-primary">
