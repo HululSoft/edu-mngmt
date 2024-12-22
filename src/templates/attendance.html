@@ -66,7 +66,7 @@
                 </thead>
                 <tbody>
                     {% for student in students %}
-                        <tr id="studentId_{{ student.id }}">
+                        <tr id="studentId_{{ student.id }}" class="studentRow">
                             <td>{{ loop.index }}</td>
                             <td><a href="{{ url_for('student', student_id=student.id) }}">{{ student.name }}</a></td>
                             {% for score in scores_labels %}
@@ -143,6 +143,9 @@
     async function fetchAndUpdateAttendance(lessonDate) {
         try {
             showBlurOverlay();
+            // remove class "table-danger" from all rows
+            const rows = document.querySelectorAll("#scoresTable tbody tr");
+            rows.forEach(row => row.classList.remove("table-danger"));
             // Fetch attendance data for the selected date and class
             const response = await fetch(`/attendance_data/{{ class_id }}/${lessonDate}`);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -189,6 +192,10 @@
                     const scoreCheckbox = studentRow.querySelector(`input[name="${prop}_${studentScores.student_id}"]`);
                     if (scoreCheckbox) {
                         scoreCheckbox.checked = Boolean(scores[prop]);
+                        // if prop is "attendance" and value is false, set the row class to "table-danger"
+                        if (prop === "attendance" && !scores[prop]) {
+                            studentRow.classList.add("table-danger");
+                        }
                     }
                 });
             });

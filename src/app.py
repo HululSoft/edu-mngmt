@@ -1,5 +1,7 @@
 import base64
+import logging
 import os
+import time
 from functools import wraps
 from flask import Flask, request, render_template, redirect, url_for, session, jsonify
 from data_manager import DataManager
@@ -19,6 +21,28 @@ db.init_app(app)
 
 data_manager = DataManager(db.session)
 
+logging.basicConfig(level=logging.INFO)
+custom_logger = logging.getLogger("custom")
+custom_logger.setLevel(logging.INFO)
+
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+
+@app.before_request
+def start_timer():
+    request.start_time = time.time()
+
+@app.after_request
+def log_request(response):
+    if hasattr(request, 'start_time'):
+        duration = time.time() - request.start_time
+        log_message = (
+            f'{request.remote_addr} - - [{time.strftime("%d/%b/%Y %H:%M:%S")}] '
+            f'"{request.method} {request.path} {request.environ.get("SERVER_PROTOCOL")}" '
+            f'{response.status_code} - {duration:.3f}s'
+        )
+        custom_logger.info(log_message)
+    return response
 
 def login_required(f):
     @wraps(f)
@@ -82,20 +106,15 @@ def attendance(class_id):
         students = data_manager.get_students_by_class(class_id)
         score_labels = data_manager.load_score_labels()
         
-        
+        students_score_data = dict()
         for student in students:
             student_id = student['id']
-            new_score = {
-                'student_id': student_id,
-                'lesson_date': lesson_date,
-                'class_id': class_id
-            }
+            new_score = {}
             for score in score_labels:
                 new_score[score['name']] = f"{score['name']}_{student_id}" in request.form
+            students_score_data[student_id] = new_score
+        data_manager.save_scores(lesson_date, students_score_data)
 
-            data_manager.save_score(new_score)
-        
-        return redirect(url_for('select_class'))
     class_name = data_manager.get_class_by_id(class_id)['name']
     students = data_manager.get_students_by_class(class_id)
     scores_labels = data_manager.load_score_labels()

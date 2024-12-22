@@ -248,91 +248,64 @@ class DataManager:
         except SQLAlchemyError as e:
             return {"status": "error", "message": str(e)}
 
-
-    def save_score(self, score_data):
+    # students_score_data is a disct with student_id as key and value as a dict of scores
+    def save_scores(self, lesson_date, students_score_data):
         """
-        Save scores for a student on a specific lesson date with optimized search and bulk operations.
+        Save scores for all students in a class on a specific lesson date.
 
         Args:
-            score_data (dict): A dictionary containing:
-                - student_id (int): The ID of the student.
-                - lesson_date (date): The date of the lesson.
-                - Any additional keys representing criteria names with boolean values (e.g., 'attendance', 'time', etc.).
+            lesson_date (str): The date of the lesson in 'YYYY-MM-DD' format.
+            class_id (int): The ID of the class.
+            students_score_data (dict): A dictionary containing scores for all students.
+                The keys are student IDs, and the values are dictionaries with criterion names as keys and boolean values.
+
         """
         try:
-            student_id = score_data.get('student_id')
-            lesson_date = score_data.get('lesson_date')
+            # Convert string date to a datetime object
+            lesson_date_obj = datetime.strptime(lesson_date, '%Y-%m-%d').date()
 
-            # Validate required fields
-            if not student_id or not lesson_date:
-                return {"status": "error", "message": "Missing required fields: student_id or lesson_date"}
-
-            # Extract dynamic criteria from the score_data (everything except student_id, lesson_date, class_id)
-            scores = {
-                key: value
-                for key, value in score_data.items()
-                if key not in ['student_id', 'lesson_date', 'class_id']
-            }
-
-            # Fetch the criteria from the database (e.g., attendance, uniform, etc.)
             criteria_map = {c.name: c.id for c in self.db_session.query(Criteria).all()}
-
-            # Fetch all existing scores for the student and lesson_date in one query to avoid multiple lookups
             existing_scores_query = (
                 self.db_session.query(Score)
-                .filter(Score.student_id == student_id, Score.lesson_date == lesson_date)
+                .filter(Score.student_id.in_(students_score_data.keys()), Score.lesson_date == lesson_date_obj)
                 .all()
             )
-
-            # Create a map of existing scores with (criteria_id, student_id, lesson_date) as key
             existing_scores_map = {
-                (score.criteria_id, score.student_id, score.lesson_date): score
+                (score.student_id, score.criteria_id): score
                 for score in existing_scores_query
             }
 
-            # Prepare the list for bulk insertions/updates
             scores_to_insert = []
             scores_to_update = []
 
-            # Iterate over the provided scores for each criterion and decide whether to insert or update
-            for criterion_name, value in scores.items():
-                criteria_id = criteria_map.get(criterion_name)
-                if not criteria_id:
-                    # Skip if the criterion is not defined in the database
-                    continue
+            for student_id, scores_data in students_score_data.items():
+                for criterion_name, value in scores_data.items():
+                    criteria_id = criteria_map.get(criterion_name)
+                    if not criteria_id:
+                        continue
 
-                # Check if a score already exists for the student, lesson_date, and criteria
-                existing_score = existing_scores_map.get((criteria_id, student_id, lesson_date))
+                    existing_score = existing_scores_map.get((student_id, criteria_id))
+                    if existing_score and existing_score.value != value:
+                        existing_score.value = value
+                        scores_to_update.append(existing_score)
+                    else:
+                        new_score = Score(
+                            student_id=student_id,
+                            lesson_date=lesson_date_obj,
+                            criteria_id=criteria_id,
+                            value=value
+                        )
+                        scores_to_insert.append(new_score)
 
-                if existing_score:
-                    # If the score exists, update its value
-                    existing_score.value = value
-                    scores_to_update.append(existing_score)
-                else:
-                    # Otherwise, create a new score for insertion
-                    new_score = Score(
-                        student_id=student_id,
-                        lesson_date=lesson_date,
-                        criteria_id=criteria_id,
-                        value=value
-                    )
-                    scores_to_insert.append(new_score)
-
-            # Perform batch insert and update
             if scores_to_update:
-                self.db_session.bulk_save_objects(scores_to_update)  # Bulk update
+                self.db_session.bulk_save_objects(scores_to_update)
             if scores_to_insert:
-                self.db_session.bulk_save_objects(scores_to_insert)  # Bulk insert
-
-            # Commit all the changes to the database
+                self.db_session.bulk_save_objects(scores_to_insert)
             self.db_session.commit()
-
-            return {"status": "success", "message": "Scores saved successfully"}
-
+            return {"status": "success", "message": "Scores saved successfully."}
         except SQLAlchemyError as e:
-            # Handle any database errors and rollback the transaction
             self.db_session.rollback()
-            return {"status": "error", "message": str(e)}
+            raise ValueError(f"Database error: Unable to save scores. {str(e)}")
 
 
     def get_monthly_report(self, student_id, class_id, month,year):
