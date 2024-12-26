@@ -105,13 +105,18 @@ def attendance(class_id):
         lesson_date = request.form['lesson_date']
         students = data_manager.get_students_by_class(class_id)
         score_labels = data_manager.load_score_labels()
-        
+
+        student_notes = request.form['notes'] # a json string like this: '{"32": {<score_label>: "some notes"} }' where 32 is the student id
+        student_notes = eval(student_notes)
         students_score_data = dict()
         for student in students:
             student_id = student['id']
             new_score = {}
             for score in score_labels:
-                new_score[score['name']] = f"{score['name']}_{student_id}" in request.form
+                new_score[score['name']] = {
+                    'value': f'{score["name"]}_{student_id}' in request.form,
+                    'notes': student_notes.get(str(student_id), {}).get(score['name'], None)
+                }
             students_score_data[student_id] = new_score
         data_manager.save_scores(lesson_date, students_score_data)
 
@@ -133,8 +138,8 @@ def attendance_data(class_id, date):
 @login_required
 def monthly_report(class_id, student_id):
     if request.method == 'POST':
-        month = request.form['month']
-        year = request.form['year']
+        month = int(request.form['month'])
+        year = int(request.form['year'])
         student = data_manager.get_student_by_id(student_id)
         class_data = data_manager.get_class_by_id(class_id)
         scores_labels=data_manager.load_score_labels()

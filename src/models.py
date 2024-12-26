@@ -53,6 +53,7 @@ class Score(db.Model):
     lesson_date = db.Column(db.Date, nullable=False)
     criteria_id = db.Column(db.Integer, db.ForeignKey(f'{get_schema()}.criteria.id'), nullable=False)
     value = db.Column(db.Boolean, nullable=False, default=False)
+    notes = db.Column(db.String(255), nullable=True)
 
     # Relationships
     student = db.relationship('Student', backref='scores', lazy=True)

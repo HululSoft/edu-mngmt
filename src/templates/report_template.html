@@ -205,7 +205,9 @@
             {% for label in scores_labels %}
             <tr>
                 <td class="first-column" style="width: 30%;">{{ label.label }}</td>
-                <td style="width: 30%;">{{ scores[label.name] }}</td>
+                <td style="width: 30%;">
+                    <textarea>{{ scores[label.name] }}</textarea>
+                </td>
                 <td style="width: 40%;">
                     <textarea 
                         name="notes_{{ label.name }}" 

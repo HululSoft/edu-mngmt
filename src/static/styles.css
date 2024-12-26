@@ -45,3 +45,7 @@ body {
     -webkit-backdrop-filter: blur(8px); /* For Safari */
     z-index: 1050; /* Ensure it appears above other content */
 }
+
+.with-notes {
+    color: #ff0000;
+}

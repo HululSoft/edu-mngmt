@@ -209,7 +209,10 @@ class DataManager:
                     }
 
                 # Add each criterion as a separate key in the 'scores' dictionary
-                scores_by_student[student_id]["scores"][score.criteria.name] = score.value
+                scores_by_student[student_id]["scores"][score.criteria.name] = {
+                    "value": score.value,
+                    "notes": score.notes
+                }
 
             # Flatten the results into a list
             scores = list(scores_by_student.values())
@@ -246,7 +249,7 @@ class DataManager:
             return {"scores": scores}
 
         except SQLAlchemyError as e:
-            return {"status": "error", "message": str(e)}
+            raise ValueError(f"Database error: Unable to fetch scores. {str(e)}")
 
     # students_score_data is a disct with student_id as key and value as a dict of scores
     def save_scores(self, lesson_date, students_score_data):
@@ -257,7 +260,7 @@ class DataManager:
             lesson_date (str): The date of the lesson in 'YYYY-MM-DD' format.
             class_id (int): The ID of the class.
             students_score_data (dict): A dictionary containing scores for all students.
-                The keys are student IDs, and the values are dictionaries with criterion names as keys and boolean values.
+                The keys are student IDs, and the values are dictionaries with criterion names as keys and values are "values" (boolean), and "notes" (string).
 
         """
         try:
@@ -279,21 +282,24 @@ class DataManager:
             scores_to_update = []
 
             for student_id, scores_data in students_score_data.items():
-                for criterion_name, value in scores_data.items():
+                for criterion_name, criteria_data in scores_data.items():
                     criteria_id = criteria_map.get(criterion_name)
                     if not criteria_id:
                         continue
 
                     existing_score = existing_scores_map.get((student_id, criteria_id))
-                    if existing_score and existing_score.value != value:
-                        existing_score.value = value
-                        scores_to_update.append(existing_score)
+                    if existing_score:
+                        if (existing_score.value != criteria_data.get('value') or existing_score.notes != criteria_data.get('notes')):
+                            existing_score.value = criteria_data.get('value')
+                            existing_score.notes = criteria_data.get('notes')
+                            scores_to_update.append(existing_score)
                     else:
                         new_score = Score(
                             student_id=student_id,
                             lesson_date=lesson_date_obj,
                             criteria_id=criteria_id,
-                            value=value
+                            value=criteria_data.get('value'),
+                            notes=criteria_data.get('notes') if criteria_data.get('notes') else None
                         )
                         scores_to_insert.append(new_score)
 
@@ -309,13 +315,17 @@ class DataManager:
 
 
     def get_monthly_report(self, student_id, class_id, month,year):
-        scores = self.get_scores_by_student_and_month(student_id, month, year)
-        if not scores:
+        scoresData = self.get_scores_by_student_and_month(student_id, month, year)
+        if not scoresData:
             return None
 
-        aggregated_scores = {score_type['name']: sum(score[score_type['name']] for score in scores)
-                             for score_type in self.load_score_labels()}
-        
+        # for each score type, calculate the total score for the month
+        aggregated_scores = {score_type['name']: 0 for score_type in self.load_score_labels()}
+        for score in scoresData:
+            for criterion in score['scores']:
+                aggregated_scores[criterion['criteria_name']] += 1 if criterion['value'] else 0
+
+        # calculate the total number of lessons in the month
        
         total_lessons = count_fridays(year,month)
         return {
