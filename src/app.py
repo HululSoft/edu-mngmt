@@ -212,7 +212,10 @@ def delete_student(student_id, class_id):
     data_manager.delete_student(student_id)
     return redirect(url_for('attendance', class_id=class_id))
 
-
+# route to show all json data
+@app.route('/internal/data')
+def internal_data():
+    return jsonify(data_manager.get_all_data())
 
 @app.route('/logout')
 def logout():

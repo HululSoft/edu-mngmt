@@ -325,6 +325,18 @@ class DataManager:
         with open(self.students_file, 'w', encoding='utf-8') as file:
             json.dump(students, file, indent=4, ensure_ascii=False)
 
+    def get_all_data(self):
+        with open(self.teachers_file, 'r', encoding='utf-8') as file:
+            teachers = json.load(file)
+        with open(self.classes_file, 'r', encoding='utf-8') as file:
+            classes = json.load(file)
+        with open(self.students_file, 'r', encoding='utf-8') as file:
+            students = json.load(file)
+        with open(self.scores_file, 'r', encoding='utf-8') as file:
+            scores = json.load(file)
+        with open(self.scores_labels_file, 'r', encoding='utf-8') as file:
+            scores_labels = json.load(file)
+        return dict(teachers=teachers, classes=classes, students=students, scores=scores, scores_labels=scores_labels)
 
 def count_fridays(year: str, month: str) -> int:
     year = int(year)
