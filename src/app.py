@@ -1,15 +1,48 @@
 import base64
+import logging
 import os
+import time
 from functools import wraps
-
 from flask import Flask, request, render_template, redirect, url_for, session, jsonify
-
 from data_manager import DataManager
+from models import db
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
-data_manager = DataManager(os.path.join(os.path.dirname(__file__), 'data'))
 
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['DB_SCHEMA'] = os.getenv('DB_SCHEMA', 'school_management')  # Default schema
+
+app.secret_key = 'supersecretkey'
+
+# Initialize the database
+db.init_app(app)
+
+data_manager = DataManager(db.session)
+
+logging.basicConfig(level=logging.INFO)
+custom_logger = logging.getLogger("custom")
+custom_logger.setLevel(logging.INFO)
+
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+
+@app.before_request
+def start_timer():
+    request.start_time = time.time()
+
+@app.after_request
+def log_request(response):
+    if hasattr(request, 'start_time'):
+        duration = time.time() - request.start_time
+        log_message = (
+            f'{request.remote_addr} - - [{time.strftime("%d/%b/%Y %H:%M:%S")}] '
+            f'"{request.method} {request.path} {request.environ.get("SERVER_PROTOCOL")}" '
+            f'{response.status_code} - {duration:.3f}s'
+        )
+        custom_logger.info(log_message)
+    return response
 
 def login_required(f):
     @wraps(f)
@@ -29,7 +62,9 @@ def index():
 def admin():
     teachers = data_manager.load_teachers()
     classes = data_manager.load_classes()
-    return render_template('management.html', teachers=teachers, classes=classes)
+    teachers_with_assigned_classes = data_manager.get_teachers_with_assigned_classes()
+    
+    return render_template('management.html', teachers=teachers, classes=classes,teachers_with_assigned_classes=teachers_with_assigned_classes)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -70,21 +105,21 @@ def attendance(class_id):
         lesson_date = request.form['lesson_date']
         students = data_manager.get_students_by_class(class_id)
         score_labels = data_manager.load_score_labels()
-        
-        
+
+        student_notes = request.form['notes'] # a json string like this: '{"32": {<score_label>: "some notes"} }' where 32 is the student id
+        student_notes = eval(student_notes)
+        students_score_data = dict()
         for student in students:
             student_id = student['id']
-            new_score = {
-                'student_id': student_id,
-                'lesson_date': lesson_date,
-                'class_id': class_id
-            }
+            new_score = {}
             for score in score_labels:
-                new_score[score['name']] = f"{score['name']}_{student_id}" in request.form
+                new_score[score['name']] = {
+                    'value': f'{score["name"]}_{student_id}' in request.form,
+                    'notes': student_notes.get(str(student_id), {}).get(score['name'], None)
+                }
+            students_score_data[student_id] = new_score
+        data_manager.save_scores(lesson_date, students_score_data)
 
-            data_manager.save_score(new_score)
-        
-        return redirect(url_for('select_class'))
     class_name = data_manager.get_class_by_id(class_id)['name']
     students = data_manager.get_students_by_class(class_id)
     scores_labels = data_manager.load_score_labels()
@@ -103,8 +138,8 @@ def attendance_data(class_id, date):
 @login_required
 def monthly_report(class_id, student_id):
     if request.method == 'POST':
-        month = request.form['month']
-        year = request.form['year']
+        month = int(request.form['month'])
+        year = int(request.form['year'])
         student = data_manager.get_student_by_id(student_id)
         class_data = data_manager.get_class_by_id(class_id)
         scores_labels=data_manager.load_score_labels()
@@ -205,11 +240,18 @@ def update_student(student_id):
         return render_template('student.html', error=str(e), student=request.form)
 
 
+#rote to activate a student. accepts student id
+@app.route('/activate_student/<int:student_id>/<int:class_id>')
+@login_required
+def activate_student(student_id, class_id):
+    data_manager.set_student_active(student_id, True)
+    return redirect(url_for('attendance', class_id=class_id))
+
 # route for delete_student. it accepts student id and class id
 @app.route('/delete_student/<int:student_id>/<int:class_id>')
 @login_required
 def delete_student(student_id, class_id):
-    data_manager.delete_student(student_id)
+    data_manager.set_student_active(student_id, False)
     return redirect(url_for('attendance', class_id=class_id))
 
 # route to show all json data

@@ -1,162 +1,331 @@
 import base64
+import calendar
 import json
 from datetime import datetime
-import calendar
+from sqlalchemy.exc import SQLAlchemyError
+from models import Class, Teacher, ClassTeacher, Student, Score, Criteria
+
 
 class DataManager:
-    def __init__(self, data_dir):
-        self.teachers_file = f"{data_dir}/teachers.json"
-        self.classes_file = f"{data_dir}/classes.json"
-        self.students_file = f"{data_dir}/students.json"
-        self.scores_file = f"{data_dir}/scores.json"
-        self.scores_labels_file = f"{data_dir}/scores_labels.json"
+    def __init__(self,db_session):
+        self.db_session = db_session
 
     def load_score_labels(self):
-        """Load score labels and metadata from JSON file."""
-        with open(self.scores_labels_file, 'r', encoding='utf-8') as file:
-            return json.load(file)
-
-    def get_teacher_name(self, teacher_id):
-        with open(self.teachers_file, 'r', encoding='utf-8') as file:
-            teachers = json.load(file)
-        for teacher in teachers:
-            if teacher['id'] == teacher_id:
-                return teacher['name']
-        return None
-    
-    def get_class_by_id(self, class_id):
-        # Load classes data from the classes JSON file
-        with open(self.classes_file, 'r',encoding='utf-8') as file:
-            classes = json.load(file)
-        
-        # Find and return the class data by matching the class_id
-        for class_data in classes:
-            if class_data['id'] == class_id:
-                return class_data
-        return None  # Return None if no matching class is found
-        
-    def get_student_by_id(self, student_id):
-        # Load students data from the students JSON file
-        with open(self.students_file, 'r', encoding='utf-8') as file:
-            students = json.load(file)
-        
-        # Find and return the student data by matching the student_id
-        for student in students:
-            if student['id'] == student_id:
-                return student
-        return None  # Return None if no matching student is found
-    def get_student_by_name(self, student_name):
-        # Load students data from the students JSON file
-        with open(self.students_file, 'r',encoding='utf-8') as file:
-            students = json.load(file)
-
-        # Find and return the student data by matching the name
-        for student in students:
-            if student['name'] == student_name:
-                return student
-        return None
-    def get_students_by_class(self, class_id):
-        # Load students data from the students JSON file
-        with open(self.students_file, 'r',encoding='utf-8') as file:
-            students = json.load(file)
-        
-        # Filter and return the list of students that match the class_id and has no active: false
-        class_students = [student for student in students if student['class_id'] == class_id and student.get('active', True)]
-        return class_students
-        
-    def get_classes_by_teacher(self, teacher_id):
-        # Load classes data from the classes JSON file
-        with open(self.classes_file, 'r',encoding='utf-8') as file:
-            classes = json.load(file)
-        
-        # Filter and return the list of classes with the matching teacher_id in the teacher_ids list
-        teacher_classes = [class_data for class_data in classes if teacher_id in class_data['teacher_ids']]
-        return teacher_classes
-        
-    def get_teacher_by_name(self, teacher_name):
-        # Load teachers data from the teachers JSON file
-        with open(self.teachers_file, 'r',encoding='utf-8') as file:
-            teachers = json.load(file)
-        
-        # Find and return the teacher data by matching the name
-        for teacher in teachers:
-            if teacher['name'] == teacher_name:
-                return teacher
-        return None  # Return None if no matching teacher is found
-        
-    def get_scores_by_student_and_month(self, student_id, month, year):
-        with open(self.scores_file, 'r', encoding='utf-8') as file:
-            scores = json.load(file)
-
-        month_start = datetime(int(year), int(month), 1)
-        if month_start.month == 12:
-            next_month = month_start.replace(year=month_start.year + 1, month=1)
-        else:
-            next_month = month_start.replace(month=month_start.month + 1)
-        month_end = next_month.replace(day=1)
-
+        """
+        Load score labels and metadata from the database.
+        """
+        criteria = self.db_session.query(Criteria).all()
         return [
-            score for score in scores
-            if score['student_id'] == student_id and
-               month_start <= datetime.strptime(score['lesson_date'], "%Y-%m-%d") < month_end
+            {
+                "id": criterion.id,
+                "name": criterion.name,
+                "label": criterion.label
+            }
+            for criterion in criteria
         ]
 
-    def get_scores_by_date(self, lesson_date, class_id, include_adjacent_dates=False):
-        with open(self.scores_file, 'r', encoding='utf-8') as file:
-            scores = json.load(file)
+    def get_teacher_name(self, teacher_id):
+        """
+        Get the teacher's name by their ID from the database.
+        """
+        # Query the database for the teacher's name
+        teacher = self.db_session.query(Teacher).filter(Teacher.id == teacher_id).first()
+        return teacher.name if teacher else None
+    
+    def get_class_by_id(self, class_id):
+        """
+        Get class data by class ID from the database.
+        """
+        # Query the database for the class
+        class_data = self.db_session.query(Class).filter(Class.id == class_id).first()
+        return {'id': class_data.id, 'name': class_data.name} if class_data else None
+    
+        
 
-        if include_adjacent_dates:
-            previous_date = next_date = None
-            # extract dates in a set. sort the set by date, and get the dates preceding and following lesson_date
-            lesson_dates = set([score["lesson_date"] for score in scores if score['class_id'] == class_id])
-            if lesson_date not in lesson_dates:
-                lesson_dates.add(lesson_date)
-            lesson_dates = sorted(lesson_dates,  key=lambda x: datetime.strptime(x, '%Y-%m-%d'))
-            lesson_date_index = lesson_dates.index(lesson_date)
-            if lesson_date_index > 0:
-                previous_date = lesson_dates[lesson_date_index - 1]
-            if lesson_date_index + 1 < len(lesson_dates):
-                next_date = lesson_dates[lesson_date_index + 1]
-            return dict(scores=[score for score in scores if score['lesson_date'] == lesson_date and score['class_id'] == class_id],
-                          previous_date=previous_date, next_date=next_date)
-        else:
-             return dict(scores=[score for score in scores if score['lesson_date'] == lesson_date and score['class_id'] == class_id])
-    def save_score(self, score_data):
+    def get_student_by_id(self, student_id):
+        """
+        Get a student by their ID from the database.
+        """
+        student = self.db_session.query(Student).filter_by(id=student_id).first()
+        if student:
+            return {
+                'id': student.id,
+                'name': student.name,
+                'class_id': student.class_id,
+                'active': student.active,
+                'phone': student.phone,
+                'parent_phone': student.parent_phone,
+                'date_joined': student.date_joined.isoformat() if student.date_joined else None,
+                'inactive_date': student.inactive_date.isoformat() if student.inactive_date else None
+            }
+        return None
+    
+    def get_students_by_class(self, class_id):
+        """
+        Get all active students for a specific class ID from the database.
+        """
+        # Query the database for students in the given class and filter by active status
+        class_students = (
+            self.db_session.query(Student)
+            .filter(Student.class_id == class_id, Student.active == True)
+            .all()
+        )
+
+        # Convert the query results into a list of dictionaries
+        return [
+            {
+                'id': student.id,
+                'name': student.name,
+                'class_id': student.class_id,
+                'active': student.active,
+                'inactive_date': student.inactive_date
+            }
+            for student in class_students
+        ]
+        
+    def get_classes_by_teacher(self, teacher_id):
+        """
+        Get classes by teacher ID from the database.
+        """
+        # Query the database to fetch classes associated with the teacher
+        teacher_classes = (
+            self.db_session.query(Class)
+            .join(ClassTeacher, Class.id == ClassTeacher.class_id)
+            .filter(ClassTeacher.teacher_id == teacher_id)
+            .all()
+        )
+        return [{'id': cls.id, 'name': cls.name} for cls in teacher_classes]
+        
+    def get_teacher_by_name(self, teacher_name):
+        """
+        Get a teacher by their name from the database.
+        """
+        # Query the database for a teacher with the given name
+        teacher = self.db_session.query(Teacher).filter_by(name=teacher_name).first()
+        if teacher:
+            return {
+                'id': teacher.id,
+                'name': teacher.name,
+                'password': teacher.password  # Include only safe fields
+            }
+        return None
+        
+    def get_scores_by_student_and_month(self, student_id, month, year):
+        """
+        Get scores for a specific student and month from the database.
+
+        Args:
+            student_id (int): The ID of the student.
+            month (int): The month for which scores are retrieved.
+            year (int): The year for which scores are retrieved.
+
+        Returns:
+            list: A list of dictionaries containing scores grouped by date and criterion.
+        """
         try:
-            # Open the file in read mode first to load existing scores
-            with open(self.scores_file, 'r', encoding='utf-8') as file:
-                try:
-                    # Load existing scores from the file
-                    scores = json.load(file)
-                except json.JSONDecodeError:
-                    # Initialize as an empty list if the file is empty or invalid
-                    scores = []
-        except FileNotFoundError:
-            # Initialize as an empty list if the file doesn't exist
-            scores = []
-        
-        # Create a dictionary for quick lookup by (student_id, lesson_date, class_id) tuple
-        scores_dict = {(score['student_id'], score['lesson_date'], score['class_id']): score for score in scores}
-        
-        # Add or replace the score in the dictionary
-        key = (score_data['student_id'], score_data['lesson_date'], score_data['class_id'])
-        scores_dict[key] = score_data  # Replace or add the score
-        
-        # Convert the dictionary back to a list
-        updated_scores = list(scores_dict.values())
-        
-        # Open the file in write mode to save the updated scores
-        with open(self.scores_file, 'w', encoding='utf-8') as file:
-            json.dump(updated_scores, file, indent=4, ensure_ascii=False)
+            # Calculate the start and end dates for the given month
+            month_start = datetime(year, month, 1).date()
+            if month == 12:
+                month_end = datetime(year + 1, 1, 1).date()
+            else:
+                month_end = datetime(year, month + 1, 1).date()
+
+            # Query the database for scores in the given range
+            scores_query = (
+                self.db_session.query(Score)
+                .filter(
+                    Score.student_id == student_id,
+                    Score.lesson_date >= month_start,
+                    Score.lesson_date < month_end
+                )
+                .join(Criteria)  # Join with the Criteria table to fetch criterion details
+            )
+
+            # Group scores by lesson_date for structured output
+            scores_by_date = {}
+            for score in scores_query.all():
+                lesson_date = score.lesson_date.isoformat()
+                if lesson_date not in scores_by_date:
+                    scores_by_date[lesson_date] = {
+                        "lesson_date": lesson_date,
+                        "scores": []
+                    }
+                scores_by_date[lesson_date]["scores"].append({
+                    "criteria_name": score.criteria.name,
+                    "criteria_label": score.criteria.label,
+                    "value": score.value
+                })
+
+            # Convert grouped scores into a list
+            return list(scores_by_date.values())
+        except SQLAlchemyError as e:
+            return {"status": "error", "message": str(e)}
+
+
+    def get_scores_by_date(self, lesson_date, class_id, include_adjacent_dates=False):
+        """
+        Get scores for all students in a class on a specific lesson date.
+        Optionally include scores for adjacent dates.
+
+        Args:
+            lesson_date (str): The date of the lesson in 'YYYY-MM-DD' format.
+            class_id (int): The ID of the class.
+            include_adjacent_dates (bool): Whether to include previous and next lesson dates.
+
+        Returns:
+            dict: A dictionary containing scores for all students and optional adjacent dates.
+        """
+        try:
+            # Convert string date to a datetime object
+            lesson_date_obj = datetime.strptime(lesson_date, '%Y-%m-%d').date()
+
+            # Step 1: Fetch all active students in the class using the helper function
+            students = self.get_students_by_class(class_id)
+            student_ids = [student['id'] for student in students]
+
+            # Step 2: Query all scores for the specified students and date
+            scores_query = (
+                self.db_session.query(Score)
+                .filter(
+                    Score.student_id.in_(student_ids),
+                    Score.lesson_date == lesson_date_obj
+                )
+                .join(Criteria)  # Join with Criteria to fetch criterion metadata
+            )
+
+            # Step 3: Group scores by student and lesson date, and flatten scores structure
+            scores_by_student = {}
+            for score in scores_query.all():
+                student_id = score.student_id
+                if student_id not in scores_by_student:
+                    scores_by_student[student_id] = {
+                        "student_id": student_id,
+                        "student_name": next(
+                            (student['name'] for student in students if student['id'] == student_id),
+                            "Unknown"
+                        ),
+                        "lesson_date": lesson_date_obj.isoformat(),
+                        "scores": {}
+                    }
+
+                # Add each criterion as a separate key in the 'scores' dictionary
+                scores_by_student[student_id]["scores"][score.criteria.name] = {
+                    "value": score.value,
+                    "notes": score.notes
+                }
+
+            # Flatten the results into a list
+            scores = list(scores_by_student.values())
+
+            # Step 4: Include adjacent dates if required
+            if include_adjacent_dates:
+                # Query distinct lesson dates for the class
+                all_dates_query = (
+                    self.db_session.query(Score.lesson_date)
+                    .filter(Score.student_id.in_(student_ids))
+                    .distinct()
+                    .order_by(Score.lesson_date)
+                )
+                all_dates = [row.lesson_date for row in all_dates_query.all()]
+                previous_date = next_date = None
+
+                # Locate the current lesson_date in the sorted list
+                if lesson_date_obj not in all_dates:
+                    all_dates.append(lesson_date_obj)
+                    all_dates.sort()
+                lesson_date_index = all_dates.index(lesson_date_obj)
+                if lesson_date_index > 0:
+                    previous_date = all_dates[lesson_date_index - 1].isoformat()
+                if lesson_date_index + 1 < len(all_dates):
+                    next_date = all_dates[lesson_date_index + 1].isoformat()
+
+                return {
+                    "scores": scores,
+                    "previous_date": previous_date,
+                    "next_date": next_date,
+                }
+
+            # Step 5: Return scores for the specific date only
+            return {"scores": scores}
+
+        except SQLAlchemyError as e:
+            raise ValueError(f"Database error: Unable to fetch scores. {str(e)}")
+
+    # students_score_data is a disct with student_id as key and value as a dict of scores
+    def save_scores(self, lesson_date, students_score_data):
+        """
+        Save scores for all students in a class on a specific lesson date.
+
+        Args:
+            lesson_date (str): The date of the lesson in 'YYYY-MM-DD' format.
+            class_id (int): The ID of the class.
+            students_score_data (dict): A dictionary containing scores for all students.
+                The keys are student IDs, and the values are dictionaries with criterion names as keys and values are "values" (boolean), and "notes" (string).
+
+        """
+        try:
+            # Convert string date to a datetime object
+            lesson_date_obj = datetime.strptime(lesson_date, '%Y-%m-%d').date()
+
+            criteria_map = {c.name: c.id for c in self.db_session.query(Criteria).all()}
+            existing_scores_query = (
+                self.db_session.query(Score)
+                .filter(Score.student_id.in_(students_score_data.keys()), Score.lesson_date == lesson_date_obj)
+                .all()
+            )
+            existing_scores_map = {
+                (score.student_id, score.criteria_id): score
+                for score in existing_scores_query
+            }
+
+            scores_to_insert = []
+            scores_to_update = []
+
+            for student_id, scores_data in students_score_data.items():
+                for criterion_name, criteria_data in scores_data.items():
+                    criteria_id = criteria_map.get(criterion_name)
+                    if not criteria_id:
+                        continue
+
+                    existing_score = existing_scores_map.get((student_id, criteria_id))
+                    if existing_score:
+                        if (existing_score.value != criteria_data.get('value') or existing_score.notes != criteria_data.get('notes')):
+                            existing_score.value = criteria_data.get('value')
+                            existing_score.notes = criteria_data.get('notes')
+                            scores_to_update.append(existing_score)
+                    else:
+                        new_score = Score(
+                            student_id=student_id,
+                            lesson_date=lesson_date_obj,
+                            criteria_id=criteria_id,
+                            value=criteria_data.get('value'),
+                            notes=criteria_data.get('notes') if criteria_data.get('notes') else None
+                        )
+                        scores_to_insert.append(new_score)
+
+            if scores_to_update:
+                self.db_session.bulk_save_objects(scores_to_update)
+            if scores_to_insert:
+                self.db_session.bulk_save_objects(scores_to_insert)
+            self.db_session.commit()
+            return {"status": "success", "message": "Scores saved successfully."}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            raise ValueError(f"Database error: Unable to save scores. {str(e)}")
+
 
     def get_monthly_report(self, student_id, class_id, month,year):
-        scores = self.get_scores_by_student_and_month(student_id, month, year)
-        if not scores:
+        scoresData = self.get_scores_by_student_and_month(student_id, month, year)
+        if not scoresData:
             return None
 
-        aggregated_scores = {score_type['name']: sum(score[score_type['name']] for score in scores)
-                             for score_type in self.load_score_labels()}
-        
+        # for each score type, calculate the total score for the month
+        aggregated_scores = {score_type['name']: 0 for score_type in self.load_score_labels()}
+        for score in scoresData:
+            for criterion in score['scores']:
+                aggregated_scores[criterion['criteria_name']] += 1 if criterion['value'] else 0
+
+        # calculate the total number of lessons in the month
        
         total_lessons = count_fridays(year,month)
         return {
@@ -165,43 +334,118 @@ class DataManager:
         }
 
     def load_teachers(self):
-        with open(self.teachers_file, 'r', encoding='utf-8') as file:
-            return [{k: v for k, v in teacher.items() if k != 'password'} for teacher in json.load(file)]
+        """
+        Load all teachers from the database, excluding their passwords.
+        """
+        teachers = self.db_session.query(Teacher).all()
+        return [
+            {
+                'id': teacher.id,
+                'name': teacher.name
+            }
+            for teacher in teachers
+        ]
+
+    def get_teachers_with_assigned_classes(self):
+        """
+        Retrieve a list of teachers with their assigned classes.
+
+        Args:
+            db_session: SQLAlchemy database session.
+
+        Returns:
+            List of dictionaries, each containing a teacher's ID, name, and their assigned classes.
+        """
+        # Query all teachers and their relationships with classes
+        teachers_with_classes = self.db_session.query(Teacher).all()
+
+        result = []
+        for teacher in teachers_with_classes:
+            assigned_classes = [
+                {
+                    'id': class_teacher.class_.id,
+                    'name': class_teacher.class_.name
+                }
+                for class_teacher in teacher.class_teachers
+            ]
+            result.append({
+                'teacher_id': teacher.id,
+                'teacher_name': teacher.name,
+                'assigned_classes': assigned_classes
+            })
+
+        return result
+
 
     def load_classes(self):
-        with open(self.classes_file, 'r', encoding='utf-8') as file:
-            return json.load(file)
+        """
+        Load all classes from the database.
+        """
+        classes = self.db_session.query(Class).all()
+        return [{'id': class_.id, 'name': class_.name} for class_ in classes]
+
 
     def unassign_class_from_teacher(self, teacher_id, class_id):
-        classes = self.load_classes()
-        # find the class with class_id and remove teacher_id from the list of teacher_ids. if teacher_id is not in the list, do nothing
-        for class_data in classes:
-            if class_data['id'] == class_id:
-                if teacher_id in class_data['teacher_ids']:
-                    class_data['teacher_ids'].remove(teacher_id)
-                    break
-        # save the updated classes list to the file
-        with open(self.classes_file, 'w', encoding='utf-8') as file:
-            json.dump(classes, file, indent=4, ensure_ascii=False)
+        """
+        Unassign a class from a teacher by removing the relationship from the database.
+        """
+        try:
+            # Query the database to find the class-teacher relationship
+            class_teacher = (
+                self.db_session.query(ClassTeacher)
+                .filter_by(teacher_id=teacher_id, class_id=class_id)
+                .first()
+            )
+
+            if class_teacher:
+                # Remove the relationship if it exists
+                self.db_session.delete(class_teacher)
+                self.db_session.commit()
+                return {"status": "success", "message": f"Class {class_id} unassigned from teacher {teacher_id}."}
+            else:
+                return {"status": "not_found", "message": f"Teacher {teacher_id} is not assigned to class {class_id}."}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()  # Rollback transaction in case of an error
+            return {"status": "error", "message": f"Database error: {str(e)}"}
 
 
     def assign_class_to_teacher(self, teacher_id, class_id):
-        classes = self.load_classes()
-        # make sure class_id is already in the list
-        if class_id not in [class_data['id'] for class_data in classes]:
-            raise ValueError(f"Class with ID {class_id} does not exist.")
-        # make sure teacher_id is already in the list
-        if teacher_id not in [teacher['id'] for teacher in self.load_teachers()]:
-            raise ValueError(f"Teacher with ID {teacher_id} does not exist.")
-        # if there is already an entry with class_id and teacher_id, do nothing. else add teacher_id to the list of teacher_ids
-        for class_data in classes:
-            if class_data['id'] == class_id:
-                if teacher_id not in class_data['teacher_ids']:
-                    class_data['teacher_ids'].append(teacher_id)
-                    break
-        # save the updated classes list to the file
-        with open(self.classes_file, 'w', encoding='utf-8') as file:
-            json.dump(classes, file, indent=4, ensure_ascii=False)
+        """
+        Assign a class to a teacher by adding the relationship in the database.
+        """
+        try:
+            # Validate that the class exists
+            class_exists = self.db_session.query(Class).filter_by(id=class_id).first()
+            if not class_exists:
+                raise ValueError(f"Class with ID {class_id} does not exist.")
+
+            # Validate that the teacher exists
+            teacher_exists = self.db_session.query(Teacher).filter_by(id=teacher_id).first()
+            if not teacher_exists:
+                raise ValueError(f"Teacher with ID {teacher_id} does not exist.")
+
+            # Check if the relationship already exists
+            existing_relationship = (
+                self.db_session.query(ClassTeacher)
+                .filter_by(teacher_id=teacher_id, class_id=class_id)
+                .first()
+            )
+            if existing_relationship:
+                return {"status": "exists", "message": f"Teacher {teacher_id} is already assigned to class {class_id}."}
+
+            # Add the new relationship
+            new_relationship = ClassTeacher(teacher_id=teacher_id, class_id=class_id)
+            self.db_session.add(new_relationship)
+            self.db_session.commit()
+
+            return {"status": "success", "message": f"Class {class_id} successfully assigned to teacher {teacher_id}."}
+        except ValueError as e:
+            self.db_session.rollback()
+            return {"status": "error", "message": str(e)}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            return {"status": "error", "message": f"Database error: {str(e)}"}
+
 
     def _add_teacher(self, teacher_name, password):
         # add a new teacher to the teachers list and save it to the file
@@ -219,124 +463,148 @@ class DataManager:
             json.dump(teachers, file, indent=4, ensure_ascii=False)
 
     def add_new_teacher(self, teacher_name, password):
-        # validate the input
+        """
+        Add a new teacher to the database.
+        """
         if not teacher_name:
             raise ValueError("Teacher name cannot be empty.")
         if not password:
             raise ValueError("Password cannot be empty.")
-        teachers = self.load_teachers()
-        # make sure teacher_name is unique
-        if any(teacher['name'] == teacher_name for teacher in teachers):
+
+        # Check if teacher name is unique
+        existing_teacher = self.db_session.query(Teacher).filter_by(name=teacher_name).first()
+        if existing_teacher:
             raise ValueError(f"Teacher with name '{teacher_name}' already exists.")
-        self._add_teacher(teacher_name, password)
 
-    def add_new_class(self, class_name, assigned_teacher_id:int):
-        # Load the current list of classes
-        with open(self.classes_file, 'r', encoding='utf-8') as file:
-            classes = json.load(file)
+        # Base64 encode the password
+        encoded_password = base64.b64encode(password.encode()).decode()
 
-        # check if class name is not already present
-        if any(class_data['name'] == class_name for class_data in classes):
+        try:
+            # Create a new teacher and add to the database
+            new_teacher = Teacher(name=teacher_name, password=encoded_password)
+            self.db_session.add(new_teacher)
+            self.db_session.commit()
+            return {"status": "success", "message": f"Teacher '{teacher_name}' added successfully."}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            return {"status": "error", "message": f"Database error: {str(e)}"}
+
+    def add_new_class(self, class_name, assigned_teacher_id):
+        """
+        Add a new class to the database and assign it to a teacher.
+        """
+        if not class_name:
+            raise ValueError("Class name cannot be empty.")
+
+        # Check if class name is unique
+        existing_class = self.db_session.query(Class).filter_by(name=class_name).first()
+        if existing_class:
             raise ValueError(f"Class with name '{class_name}' already exists.")
 
-        # Find the maximum class ID
-        max_class_id = max([class_data['id'] for class_data in classes], default=0)
+        # Check if the teacher exists
+        teacher_exists = self.db_session.query(Teacher).filter_by(id=assigned_teacher_id).first()
+        if not teacher_exists:
+            raise ValueError(f"Teacher with ID '{assigned_teacher_id}' does not exist.")
 
-        # Create a new class dictionary
-        new_class = {
-            'id': max_class_id + 1,
-            'name': class_name,
-            'teacher_ids': [assigned_teacher_id]
-        }
+        try:
+            # Create a new class and add to the database
+            new_class = Class(name=class_name)
+            self.db_session.add(new_class)
+            self.db_session.flush()  # Get the new class ID
 
-        # Append the new class to the list
-        classes.append(new_class)
+            # Assign the teacher to the class
+            new_class_teacher = ClassTeacher(teacher_id=assigned_teacher_id, class_id=new_class.id)
+            self.db_session.add(new_class_teacher)
+            self.db_session.commit()
+            return {"status": "success", "message": f"Class '{class_name}' added successfully and assigned to teacher {assigned_teacher_id}."}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            return {"status": "error", "message": f"Database error: {str(e)}"}
 
-        # Save the updated list of classes back to the file
-        with open(self.classes_file, 'w', encoding='utf-8') as file:
-            json.dump(classes, file, indent=4, ensure_ascii=False)
-
+    
     def add_new_student(self, student_name: str, class_id: int, phone_number, parent_number, date_joined):
-
+        """
+        Add a new student to the database or update the record if the student already exists but is inactive.
+        """
         if not student_name:
             raise ValueError("Student name cannot be empty.")
-        student = self.get_student_by_name(student_name)
-        if student:
-            if student.get('active', True):
-                raise ValueError(f"Student with name '{student_name}' already exists in the class.")
-            else:
-                self.update_student(student['id'], student_name, class_id, phone_number, parent_number, date_joined)
-        else:
-            # Find the maximum student ID
-            with open(self.students_file, 'r', encoding='utf-8') as file:
-                students = json.load(file)
-            max_student_id = max([student['id'] for student in students], default=0)
 
-            students.append({
-                'id': max_student_id + 1,
-                'name': student_name,
-                'class_id': class_id,
-                'phone': phone_number,
-                'parent_phone': parent_number,
-                'date_joined': date_joined
-            })
+        # Check if a student with the given name already exists
+        existing_student = self.db_session.query(Student).filter_by(name=student_name).first()
 
-            with open(self.students_file, 'w', encoding='utf-8') as file:
-                json.dump(students, file, indent=4, ensure_ascii=False)
+        try:
+            # Add a new student record
+            new_student = Student(
+                name=student_name,
+                class_id=class_id,
+                phone=phone_number,
+                parent_phone=parent_number,
+                date_joined=datetime.strptime(date_joined, "%Y-%m-%d") if date_joined else None,
+                active=True
+            )
+            self.db_session.add(new_student)
+            self.db_session.commit()
+            return {"status": "success", "message": f"Student '{student_name}' added successfully."}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()  # Rollback transaction in case of error
+            raise ValueError("Database error: Unable to add student. Please try again later, or contact support.")
 
-    def update_student(self, student_id, student_name, class_id, phone_number, parent_number, join_date):
-        # Load the current list of students
-        with open(self.students_file, 'r', encoding='utf-8') as file:
-            students = json.load(file)
+        
+    def update_student(self, student_id, student_name, class_id, phone_number, parent_number, join_date, active=True):
+        """
+        Update a student's details in the database.
+        """
+        try:
+            # Validate: Check if a student with the same name but a different ID exists
+            existing_student = (
+                self.db_session.query(Student)
+                .filter(Student.name == student_name, Student.id != student_id)
+                .first()
+            )
+            if existing_student:
+                raise ValueError(f"Student with name '{student_name}' already exists.")
 
-        # validation: if student name already exists with different id, raise error
-        if any(student['name'] == student_name and student['id'] != student_id for student in students):
-            raise ValueError(f"Student with name '{student_name}' already exists.")
-        # Find the student to update by matching the student_id
-        for student in students:
-            if student['id'] == student_id:
-                # Update the student details
-                student['name'] = student_name
-                student['class_id'] = class_id
-                student['phone'] = phone_number
-                student['parent_phone'] = parent_number
-                student['date_joined'] = join_date
-                student.pop('active', None)
-                student.pop('inactive_date', None)
-                break
+            # Find the student to update
+            student = self.db_session.query(Student).filter_by(id=student_id).first()
+            if not student:
+                raise ValueError(f"Student with ID '{student_id}' does not exist.")
 
-        # Save the updated list of students back to the file
-        with open(self.students_file, 'w', encoding='utf-8') as file:
-            json.dump(students, file, indent=4, ensure_ascii=False)
+            # Update the student details
+            student.name = student_name
+            student.class_id = class_id
+            student.phone = phone_number
+            student.parent_phone = parent_number
+            student.date_joined = datetime.strptime(join_date, "%Y-%m-%d") if join_date else None
+            student.active = active
+            
+            # Commit the changes to the database
+            self.db_session.commit()
+            return {"status": "success", "message": f"Student '{student_name}' updated successfully."}
+        except ValueError as e:
+            self.db_session.rollback()  # Rollback transaction in case of a validation error
+            raise ValueError(str(e))
+        except SQLAlchemyError as e:
+            self.db_session.rollback()  # Rollback transaction in case of a database error
+            raise ValueError("Database error: Unable to update student. Please try again later, or contact support.")
 
-    def delete_student(self, student_id):
-        # Load the current list of students
-        with open(self.students_file, 'r', encoding='utf-8') as file:
-            students = json.load(file)
+    def set_student_active(self, student_id, active=True):
+        """
+        Activate a student in the database.
+        """
+        try:
+            # Find the student by ID
+            student = self.db_session.query(Student).filter_by(id=student_id).first()
+            if not student:
+                return {"status": "error", "message": f"Student with ID {student_id} does not exist."}
 
-        # Find the student and set state: inactive
-        for student in students:
-            if student['id'] == student_id:
-                student['active'] = False
-                student['inactive_date'] = datetime.now().strftime('%Y-%m-%d')
-                break
+            student.active = active
+            student.inactive_date = None if active else datetime.now()
+            self.db_session.commit()
 
-        # Save the updated list of students back to the file
-        with open(self.students_file, 'w', encoding='utf-8') as file:
-            json.dump(students, file, indent=4, ensure_ascii=False)
-
-    def get_all_data(self):
-        with open(self.teachers_file, 'r', encoding='utf-8') as file:
-            teachers = json.load(file)
-        with open(self.classes_file, 'r', encoding='utf-8') as file:
-            classes = json.load(file)
-        with open(self.students_file, 'r', encoding='utf-8') as file:
-            students = json.load(file)
-        with open(self.scores_file, 'r', encoding='utf-8') as file:
-            scores = json.load(file)
-        with open(self.scores_labels_file, 'r', encoding='utf-8') as file:
-            scores_labels = json.load(file)
-        return dict(teachers=teachers, classes=classes, students=students, scores=scores, scores_labels=scores_labels)
+            return {"status": "success", "message": f"Student with ID {student_id} marked as {'active' if active else 'inactive'}."}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            raise ValueError(f"Database error. Unable to mark student as {'active' if active else 'inactive'}. Please try again later.")
 
 def count_fridays(year: str, month: str) -> int:
     year = int(year)

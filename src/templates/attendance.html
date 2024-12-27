@@ -10,6 +10,11 @@
     <title>تقديم الحضور</title>
 </head>
 <body>
+    <div id="blur-overlay" class="d-flex justify-content-center align-items-center position-fixed top-0 start-0 w-100 h-100">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
     <div class="container-fluid">
         <div class="row">
             <div class="col">
@@ -42,13 +47,13 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ url_for('attendance', class_id=class_id) }}">
+        <form method="POST" action="{{ url_for('attendance', class_id=class_id) }}" id="attendanceForm">
             <!-- Current Date -->
             <div class="col text-center mt-2">
                 <input type="date" id="lesson_date" name="lesson_date" class="mb-2 p-2" required>
             </div>
             <div class="table-responsive">
-            <table id="scoresTable" class="table table-bordered">
+            <table id="scoresTable" class="table table-bordered table-hover">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -61,19 +66,27 @@
                 </thead>
                 <tbody>
                     {% for student in students %}
-                        <tr id="studentId_{{ student.id }}">
-                            <td>{{ loop.index }}</td>
+                        <tr id="studentId_{{ student.id }}" class="studentRow">
+                            <td>
+                                <span class="d-none d-sm-inline">{{ loop.index }}</span>
+                                <i class="bi bi-pencil-square addNotes" style="float:left;"></i>
+                            </td>
                             <td><a href="{{ url_for('student', student_id=student.id) }}">{{ student.name }}</a></td>
                             {% for score in scores_labels %}
                                 <td><input type="checkbox" name="{{ score.name }}_{{ student.id }}"></td>
                             {% endfor %}
+                        </tr>
+                        <tr class="expanded-row d-none" id="notesRow_{{ student.id }}">
+                            <td colspan="8">
+                                <textarea class="form-control" rows="2" placeholder="أضف ملاحظاتك هنا"></textarea>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
             </div>
             <div class="actions text-center">
-                <input type="submit" class="btn btn-primary" value="حفظ">
+                <input type="submit" class="btn btn-primary" value="حفظ" disabled>
             </div>
         </form>
     </div>
@@ -88,8 +101,58 @@
         
         // Set the default value of the date input field
         document.getElementById("lesson_date").value = formattedDate;
+        document.getElementById("attendanceForm").addEventListener("submit", saveAttendance);
+        document.querySelectorAll('.addNotes').forEach(btn => {
+            btn.addEventListener('click', () => {
+                studentId = btn.closest('tr').id.split('_')[1]
+                const notesRow = document.querySelector('#notesRow_' + studentId);
+                notesRow.classList.toggle('d-none');
+                btn.classList.toggle('bi-pencil-square');
+                btn.classList.toggle('bi-check-lg');
+            });
+        });
+        // add event listener for form click. if one checkbox is checked, enable submit button. if none is checked, disable it.
+        document.getElementById("scoresTable").addEventListener("click", function (e) {
+            const submitButton = document.querySelector('input[type="submit"]');
+            const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
+            const checked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+            submitButton.disabled = !checked;
+        });
+
+
+
         fetchAndUpdateAttendance(formattedDate);
     });
+
+    async function saveAttendance(e) {
+        e.preventDefault();
+        const formData = new FormData(document.getElementById("attendanceForm"));
+
+        // get all notes from expanded rows
+        const notes = {};
+        document.querySelectorAll('.expanded-row textarea').forEach(textarea => {
+            // if the textarea is empty, skip it
+            if (!textarea.value) return;
+            notes[textarea.closest('tr').id.split('_')[1]] = {
+                "attendance": textarea.value
+            };
+        });
+
+        // add notes to the form data
+        formData.set('notes', JSON.stringify(notes));
+        try {
+            showBlurOverlay();
+            // Send the form data to the server
+            await fetch(document.getElementById("attendanceForm").action, {
+                method: "POST",
+                body: formData
+            })
+        } catch (error) {
+            console.error("Error saving attendance:", error);
+        } finally {
+            hideBlurOverlay();
+        }
+    }
 
     function openStudentForm() {
         window.location.href = "{{ url_for('add_student') }}";
@@ -117,8 +180,32 @@
         await fetchAndUpdateAttendance(this.getAttribute("data-lesson-date"));
     });
 
+    function resetTable() {
+        // remove class "table-danger" from all rows
+        const rows = document.querySelectorAll("#scoresTable tbody tr");
+        rows.forEach(row => row.classList.remove("table-danger"));
+
+        // empty textarea of notes, and hide them
+        const expandedRows = document.querySelectorAll('.expanded-row');
+        expandedRows.forEach(row => row.querySelector('textarea').value = "");
+        expandedRows.forEach(row => row.classList.add('d-none'));
+
+        const addNotesButtons = document.querySelectorAll('.addNotes');
+        addNotesButtons.forEach(btn => btn.classList.remove('with-notes'));
+
+        // change icon to pencil square
+        document.querySelectorAll('.addNotes').forEach(btn => {
+            btn.classList.remove('bi-check-lg');
+            btn.classList.add('bi-pencil-square');
+        });
+    }
+
     async function fetchAndUpdateAttendance(lessonDate) {
         try {
+            showBlurOverlay();
+            resetTable();
+
+
             // Fetch attendance data for the selected date and class
             const response = await fetch(`/attendance_data/{{ class_id }}/${lessonDate}`);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -160,18 +247,46 @@
             data.scores.forEach(studentScores => {
                 const studentRow = document.querySelector(`tr[id="studentId_${studentScores.student_id}"]`);
                 if (!studentRow) return;
-
-                Object.keys(studentScores).forEach(prop => {
+                scores = studentScores.scores
+                console.log("studentScores:", studentScores);
+                Object.keys(scores).forEach(prop => {
                     const scoreCheckbox = studentRow.querySelector(`input[name="${prop}_${studentScores.student_id}"]`);
-                    if (scoreCheckbox) {
-                        scoreCheckbox.checked = Boolean(studentScores[prop]);
+                    scoreCheckbox.checked = Boolean(scores[prop].value);
+                    // fill notes
+                    const notesRow = document.querySelector(`#notesRow_${studentScores.student_id}`);
+                    const textarea = notesRow.querySelector('textarea');
+                    if (prop === "attendance") {
+                        if (scores[prop] && scores[prop]["notes"]) {
+                            textarea.value = scores[prop]["notes"];
+                            // add .with-notes class to btn
+                            const addNotesBtn = studentRow.querySelector('.addNotes');
+                            addNotesBtn.classList.add('with-notes');
+                        }
+                        if (!scores[prop].value) {
+                            studentRow.classList.add("table-danger");
+                        }
                     }
                 });
             });
         } catch (error) {
             console.error("Error fetching or processing attendance data:", error);
+        } finally {
+            hideBlurOverlay();
         }
     }
+
+    function showBlurOverlay() {
+        document.getElementById('blur-overlay').classList.add('d-flex');
+        document.getElementById('blur-overlay').classList.remove('d-none');
+    }
+
+    // Function to hide the blur overlay
+    function hideBlurOverlay() {
+        document.getElementById('blur-overlay').classList.remove('d-flex');
+        document.getElementById('blur-overlay').classList.add('d-none');
+    }
+
+
 
 </script>
 </html>
