@@ -1,6 +1,8 @@
 # Use the official Python image
 FROM python:3.12-slim
 
+ENV PG_CONFIG=/usr/bin/pg_config
+
 # Set the working directory in the container
 WORKDIR /app
 
@@ -16,6 +18,12 @@ COPY entrypoint.sh entrypoint.sh
 # Ensure the entrypoint script has execute permissions
 RUN chmod +x entrypoint.sh
 
+# Install build dependencies for psycopg2 pip package install from resource 
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+    
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -24,6 +32,7 @@ EXPOSE 5000
 
 ENV DB_SCHEMA=students_management
 ENV DATABASE_URL=postgresql://postgres.ilglipfpynklqtsuezfv:EP!hulul1234@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
+
 
 # Declare the data folder as a volume
 VOLUME /app/data
