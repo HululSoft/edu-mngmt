@@ -30,10 +30,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expose the application port
 EXPOSE 5000
 
-ENV DB_SCHEMA=students_management
-ENV DATABASE_URL=postgresql://postgres.ilglipfpynklqtsuezfv:EP!hulul1234@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
-
-
 # Declare the data folder as a volume
 VOLUME /app/data
 RUN chmod +x entrypoint.sh
