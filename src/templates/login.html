@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل الدخول</title>
     <style>
         body {
@@ -10,15 +11,21 @@
             padding: 0;
             background-color: #d7e3f2;
             text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+
         }
         .login-container {
-            width: 400px;
-            margin: 50px auto;
+            width: 100%;
+            margin: 10px 10px;
             padding: 20px;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
             text-align: center;
+
         }
         .title {
             margin-bottom: 20px;
@@ -28,7 +35,7 @@
             color: #2e86c1;
         }
         .title img {
-            width: 100px;
+            /*width: 100px;*/
             height: auto;
             margin-bottom: 20px;
             border: 3px solid #2e86c1;
@@ -42,7 +49,6 @@
         .form-group {
             width: 100%;
             margin-bottom: 15px;
-            max-width: 350px; /* Ensures inputs don’t exceed container width */
         }
         label {
             font-weight: bold;
@@ -56,7 +62,7 @@
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            font-size: 16px;
+            /*font-size: 16px;*/
             text-align: right;
             box-sizing: border-box; /* Ensures padding doesn’t affect width */
         }
@@ -64,13 +70,12 @@
             background-color: #2e86c1;
             color: white;
             padding: 10px 20px;
-            font-size: 16px;
+            /*font-size: 16px;*/
             font-weight: bold;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             width: 100%;
-            max-width: 350px;
             margin-top: 10px;
             box-sizing: border-box;
         }
