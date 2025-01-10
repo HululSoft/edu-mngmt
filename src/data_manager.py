@@ -3,11 +3,12 @@ import calendar
 import json
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import or_
 from models import Class, Teacher, ClassTeacher, Student, Score, Criteria
 
 
 class DataManager:
-    def __init__(self,db_session):
+    def __init__(self, db_session):
         self.db_session = db_session
 
     def load_score_labels(self):
@@ -31,7 +32,7 @@ class DataManager:
         # Query the database for the teacher's name
         teacher = self.db_session.query(Teacher).filter(Teacher.id == teacher_id).first()
         return teacher.name if teacher else None
-    
+
     def get_class_by_id(self, class_id):
         """
         Get class data by class ID from the database.
@@ -39,8 +40,6 @@ class DataManager:
         # Query the database for the class
         class_data = self.db_session.query(Class).filter(Class.id == class_id).first()
         return {'id': class_data.id, 'name': class_data.name} if class_data else None
-    
-        
 
     def get_student_by_id(self, student_id):
         """
@@ -59,7 +58,7 @@ class DataManager:
                 'inactive_date': student.inactive_date.isoformat() if student.inactive_date else None
             }
         return None
-    
+
     def get_students_by_class(self, class_id):
         """
         Get all active students for a specific class ID from the database.
@@ -82,7 +81,7 @@ class DataManager:
             }
             for student in class_students
         ]
-        
+
     def get_classes_by_teacher(self, teacher_id):
         """
         Get classes by teacher ID from the database.
@@ -95,21 +94,24 @@ class DataManager:
             .all()
         )
         return [{'id': cls.id, 'name': cls.name} for cls in teacher_classes]
-        
-    def get_teacher_by_name(self, teacher_name):
+
+    def get_teacher_by_name_or_username(self, name_or_username):
         """
         Get a teacher by their name from the database.
         """
-        # Query the database for a teacher with the given name
-        teacher = self.db_session.query(Teacher).filter_by(name=teacher_name).first()
+        # Query the database for a teacher with the given name or username
+        teacher = self.db_session.query(Teacher).filter(
+            or_(Teacher.name == name_or_username, Teacher.username == name_or_username)).first()
+
         if teacher:
             return {
                 'id': teacher.id,
                 'name': teacher.name,
+                'username': teacher.username,
                 'password': teacher.password  # Include only safe fields
             }
         return None
-        
+
     def get_scores_by_student_and_month(self, student_id, month, year):
         """
         Get scores for a specific student and month from the database.
@@ -160,7 +162,6 @@ class DataManager:
             return list(scores_by_date.values())
         except SQLAlchemyError as e:
             return {"status": "error", "message": str(e)}
-
 
     def get_scores_by_date(self, lesson_date, class_id, include_adjacent_dates=False):
         """
@@ -289,7 +290,8 @@ class DataManager:
 
                     existing_score = existing_scores_map.get((student_id, criteria_id))
                     if existing_score:
-                        if (existing_score.value != criteria_data.get('value') or existing_score.notes != criteria_data.get('notes')):
+                        if (existing_score.value != criteria_data.get(
+                                'value') or existing_score.notes != criteria_data.get('notes')):
                             existing_score.value = criteria_data.get('value')
                             existing_score.notes = criteria_data.get('notes')
                             scores_to_update.append(existing_score)
@@ -313,8 +315,7 @@ class DataManager:
             self.db_session.rollback()
             raise ValueError(f"Database error: Unable to save scores. {str(e)}")
 
-
-    def get_monthly_report(self, student_id, class_id, month,year):
+    def get_monthly_report(self, student_id, class_id, month, year):
         scoresData = self.get_scores_by_student_and_month(student_id, month, year)
         if not scoresData:
             return None
@@ -326,8 +327,8 @@ class DataManager:
                 aggregated_scores[criterion['criteria_name']] += 1 if criterion['value'] else 0
 
         # calculate the total number of lessons in the month
-       
-        total_lessons = count_fridays(year,month)
+
+        total_lessons = count_fridays(year, month)
         return {
             score_type: round((aggregated_score / total_lessons) * 100, 2)
             for score_type, aggregated_score in aggregated_scores.items()
@@ -376,14 +377,12 @@ class DataManager:
 
         return result
 
-
     def load_classes(self):
         """
         Load all classes from the database.
         """
         classes = self.db_session.query(Class).all()
         return [{'id': class_.id, 'name': class_.name} for class_ in classes]
-
 
     def unassign_class_from_teacher(self, teacher_id, class_id):
         """
@@ -407,7 +406,6 @@ class DataManager:
         except SQLAlchemyError as e:
             self.db_session.rollback()  # Rollback transaction in case of an error
             return {"status": "error", "message": f"Database error: {str(e)}"}
-
 
     def assign_class_to_teacher(self, teacher_id, class_id):
         """
@@ -445,7 +443,6 @@ class DataManager:
         except SQLAlchemyError as e:
             self.db_session.rollback()
             return {"status": "error", "message": f"Database error: {str(e)}"}
-
 
     def _add_teacher(self, teacher_name, password):
         # add a new teacher to the teachers list and save it to the file
@@ -516,12 +513,12 @@ class DataManager:
             new_class_teacher = ClassTeacher(teacher_id=assigned_teacher_id, class_id=new_class.id)
             self.db_session.add(new_class_teacher)
             self.db_session.commit()
-            return {"status": "success", "message": f"Class '{class_name}' added successfully and assigned to teacher {assigned_teacher_id}."}
+            return {"status": "success",
+                    "message": f"Class '{class_name}' added successfully and assigned to teacher {assigned_teacher_id}."}
         except SQLAlchemyError as e:
             self.db_session.rollback()
             return {"status": "error", "message": f"Database error: {str(e)}"}
 
-    
     def add_new_student(self, student_name: str, class_id: int, phone_number, parent_number, date_joined):
         """
         Add a new student to the database or update the record if the student already exists but is inactive.
@@ -531,6 +528,13 @@ class DataManager:
 
         # Check if a student with the given name already exists
         existing_student = self.db_session.query(Student).filter_by(name=student_name).first()
+        if existing_student:
+            if existing_student.active:
+                raise ValueError(f"Student with name '{student_name}' already exists.")
+            else:
+                # If the student is inactive, update the record
+                return self.update_student(existing_student.id, student_name, class_id, phone_number, parent_number,
+                                           date_joined, active=True)
 
         try:
             # Add a new student record
@@ -549,7 +553,6 @@ class DataManager:
             self.db_session.rollback()  # Rollback transaction in case of error
             raise ValueError("Database error: Unable to add student. Please try again later, or contact support.")
 
-        
     def update_student(self, student_id, student_name, class_id, phone_number, parent_number, join_date, active=True):
         """
         Update a student's details in the database.
@@ -576,7 +579,7 @@ class DataManager:
             student.parent_phone = parent_number
             student.date_joined = datetime.strptime(join_date, "%Y-%m-%d") if join_date else None
             student.active = active
-            
+
             # Commit the changes to the database
             self.db_session.commit()
             return {"status": "success", "message": f"Student '{student_name}' updated successfully."}
@@ -601,19 +604,22 @@ class DataManager:
             student.inactive_date = None if active else datetime.now()
             self.db_session.commit()
 
-            return {"status": "success", "message": f"Student with ID {student_id} marked as {'active' if active else 'inactive'}."}
+            return {"status": "success",
+                    "message": f"Student with ID {student_id} marked as {'active' if active else 'inactive'}."}
         except SQLAlchemyError as e:
             self.db_session.rollback()
-            raise ValueError(f"Database error. Unable to mark student as {'active' if active else 'inactive'}. Please try again later.")
+            raise ValueError(
+                f"Database error. Unable to mark student as {'active' if active else 'inactive'}. Please try again later.")
+
 
 def count_fridays(year: str, month: str) -> int:
     year = int(year)
     month = int(month)
-    
+
     # Get a list of all days in the month and their corresponding weekdays
     month_days = calendar.monthcalendar(year, month)
-    
+
     # Count Fridays (weekday 4)
     friday_count = sum(1 for week in month_days if week[calendar.FRIDAY] != 0)
-    
+
     return friday_count

@@ -71,7 +71,7 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        teacher = data_manager.get_teacher_by_name(username)
+        teacher = data_manager.get_teacher_by_name_or_username(username)
         if teacher and validate_password(teacher['password'], password):
             session['teacher_id'] = teacher['id']
             return redirect(url_for('select_class'))
