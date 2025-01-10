@@ -1,9 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Management Console</title>
+{% extends 'base.html' %}
+{% block head %}
+    <title>{% block title %}إدارة وتحكم{% endblock %}</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
@@ -53,8 +50,8 @@
             border-radius: 5px;
         }
     </style>
-</head>
-<body>
+{% endblock %}
+{% block content %}
 <div class="form-container">
     <h1>إدارة وتحكم</h1>
     <button onclick="openTeacherForm()">إضافة معلم</button>
@@ -141,5 +138,4 @@
     }
 
 </script>
-</body>
-</html>
+{% endblock %}

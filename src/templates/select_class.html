@@ -1,11 +1,7 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+{% extends "base.html" %}
 
-    <title>اختر الصف</title>
+{% block head %}
+    <title>{% block title %}اختيار الصف{% endblock %}</title>
     <style>
 
         
@@ -54,7 +50,7 @@
         }
 
         
-        .actions span { 
+        .actions span {
             font-size: 1.1em; 
             font-weight: bold; 
             color: #34495e; 
@@ -65,8 +61,8 @@
         }
 
     </style>
-</head>
-<body>
+{% endblock %}
+{% block content %}
     <div class="container">
         <h1>اختر الصف</h1>
         <p>مرحبًا، {{ teacher_name }}! اختر صفًا أدناه لتقديم الحضور أو عرض التقارير.</p>
@@ -78,6 +74,4 @@
             {% endfor %}
         </ul>
     </div>
-</body>
-</html>
-s
+{% endblock %}

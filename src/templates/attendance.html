@@ -1,15 +1,10 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+{% extends "base.html" %}
 
-    <title>تقديم الحضور</title>
-</head>
-<body>
+{% block head %}
+    <title>{% block title %}متابعة الحضور{% endblock %}</title>
+{% endblock %}
+
+{% block content %}
     <div id="blur-overlay" class="d-flex justify-content-center align-items-center position-fixed top-0 start-0 w-100 h-100">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -90,7 +85,6 @@
             </div>
         </form>
     </div>
-</body>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Get the current date
@@ -285,8 +279,6 @@
         document.getElementById('blur-overlay').classList.remove('d-flex');
         document.getElementById('blur-overlay').classList.add('d-none');
     }
-
-
-
 </script>
-</html>
+{% endblock %}
+
