@@ -11,6 +11,7 @@ class Teacher(db.Model):
     __table_args__ = {'schema': get_schema()}  # Use the configured schema
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    username = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String, nullable=False)
 
     # Relationship with ClassTeacher
