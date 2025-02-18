@@ -1,15 +1,10 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+{% extends "base.html" %}
 
-    <title>تقديم الحضور</title>
-</head>
-<body>
+{% block head %}
+    <title>{% block title %}متابعة الحضور{% endblock %}</title>
+{% endblock %}
+
+{% block content %}
     <div id="blur-overlay" class="d-flex justify-content-center align-items-center position-fixed top-0 start-0 w-100 h-100">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -86,11 +81,10 @@
             </table>
             </div>
             <div class="actions text-center">
-                <input type="submit" class="btn btn-primary" value="حفظ" disabled>
+                <input type="submit" class="btn btn-primary" value="حفظ">
             </div>
         </form>
     </div>
-</body>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Get the current date
@@ -111,13 +105,13 @@
                 btn.classList.toggle('bi-check-lg');
             });
         });
-        // add event listener for form click. if one checkbox is checked, enable submit button. if none is checked, disable it.
-        document.getElementById("scoresTable").addEventListener("click", function (e) {
-            const submitButton = document.querySelector('input[type="submit"]');
-            const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
-            const checked = Array.from(checkboxes).some(checkbox => checkbox.checked);
-            submitButton.disabled = !checked;
-        });
+        // // add event listener for form click. if one checkbox is checked, enable submit button. if none is checked, disable it.
+        // document.getElementById("scoresTable").addEventListener("click", function (e) {
+        //     const submitButton = document.querySelector('input[type="submit"]');
+        //     const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
+        //     const checked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+        //     submitButton.disabled = !checked;
+        // });
 
 
 
@@ -126,6 +120,16 @@
 
     async function saveAttendance(e) {
         e.preventDefault();
+
+        // if no checkboxes are checked, do nothing, show confirmation message to user that this date will be cleared.
+        const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
+        const checked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+        if (!checked) {
+            if (!confirm("لم يتم تحديد أي طلاب لهذا اليوم. اللقاء غير محتسب. هل تريد المتابعة؟")) {
+                return;
+            }
+        }
+
         const formData = new FormData(document.getElementById("attendanceForm"));
 
         // get all notes from expanded rows
@@ -285,8 +289,6 @@
         document.getElementById('blur-overlay').classList.remove('d-flex');
         document.getElementById('blur-overlay').classList.add('d-none');
     }
-
-
-
 </script>
-</html>
+{% endblock %}
+

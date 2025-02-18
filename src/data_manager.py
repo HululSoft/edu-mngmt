@@ -305,6 +305,18 @@ class DataManager:
                         )
                         scores_to_insert.append(new_score)
 
+            # Check if all attendance scores are False, delete all scores for the date
+            all_attendance_scores = [score for score in scores_to_update + scores_to_insert if
+                                     score.criteria_id == criteria_map.get("attendance")]
+            if all_attendance_scores and all(not score.value for score in all_attendance_scores):
+                score_ids = [score.id for score in existing_scores_query]
+
+                if score_ids:  # Ensure there's something to delete
+                    self.db_session.query(Score).filter(Score.id.in_(score_ids)).delete(synchronize_session=False)
+                    self.db_session.commit()
+
+                return {"status": "success", "message": "All attendance scores are False. Deleted all scores for the date."}
+
             if scores_to_update:
                 self.db_session.bulk_save_objects(scores_to_update)
             if scores_to_insert:
