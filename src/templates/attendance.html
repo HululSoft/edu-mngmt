@@ -81,7 +81,7 @@
             </table>
             </div>
             <div class="actions text-center">
-                <input type="submit" class="btn btn-primary" value="حفظ" disabled>
+                <input type="submit" class="btn btn-primary" value="حفظ">
             </div>
         </form>
     </div>
@@ -105,13 +105,13 @@
                 btn.classList.toggle('bi-check-lg');
             });
         });
-        // add event listener for form click. if one checkbox is checked, enable submit button. if none is checked, disable it.
-        document.getElementById("scoresTable").addEventListener("click", function (e) {
-            const submitButton = document.querySelector('input[type="submit"]');
-            const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
-            const checked = Array.from(checkboxes).some(checkbox => checkbox.checked);
-            submitButton.disabled = !checked;
-        });
+        // // add event listener for form click. if one checkbox is checked, enable submit button. if none is checked, disable it.
+        // document.getElementById("scoresTable").addEventListener("click", function (e) {
+        //     const submitButton = document.querySelector('input[type="submit"]');
+        //     const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
+        //     const checked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+        //     submitButton.disabled = !checked;
+        // });
 
 
 
@@ -120,6 +120,16 @@
 
     async function saveAttendance(e) {
         e.preventDefault();
+
+        // if no checkboxes are checked, do nothing, show confirmation message to user that this date will be cleared.
+        const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
+        const checked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+        if (!checked) {
+            if (!confirm("لم يتم تحديد أي طلاب لهذا اليوم. اللقاء غير محتسب. هل تريد المتابعة؟")) {
+                return;
+            }
+        }
+
         const formData = new FormData(document.getElementById("attendanceForm"));
 
         // get all notes from expanded rows
