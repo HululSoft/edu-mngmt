@@ -13,6 +13,11 @@
 </head>
 <body>
 
+<!-- show navbar if there is active session -->
+{% if session.get('teacher_id') %}
+    {% include 'navbar.html' %}
+{% endif %}
+
 <!-- Main content of the page will be injected here -->
 {% block content %}{% endblock %}
 

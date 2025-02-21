@@ -10,20 +10,8 @@
             <span class="visually-hidden">Loading...</span>
         </div>
     </div>
+
     <div class="container-fluid">
-        <div class="row">
-            <div class="col-10">
-                <h1>الصف: {{ class_name }}</h1>
-            </div>
-            <div class="col text-start">
-                <button class="btn btn-outline-primary" type="button" onclick="openStudentForm()">
-                    <i class="bi bi-person-plus"></i>
-                    <span class="d-none d-sm-inline">اضافة طالب</span>
-                </button>
-            </div>
-
-        </div>
-
         <div class="row d-flex justify-content-between mt-4">
             <div class="col d-flex justify-content-between">
                 <div class="text-start" id="previous_date" data-lesson-date="{{ previous_date }}">
@@ -54,7 +42,10 @@
                         <th>#</th>
                         <th>اسم الطالب</th>
                         {% for score in scores_labels %}
-                            <th>{{ score.label }}</th>
+                        <th class="text-center align-middle">
+                            <span><img src="{{ url_for('static', filename='images/' + score.name + '.png') }}" alt="{{ score.label }}" width="20" height="20"></span>
+                            <span class="d-none d-sm-inline">{{ score.label }}</span>
+                        </th>
                         {% endfor %}
 
                     </tr>
@@ -68,7 +59,9 @@
                             </td>
                             <td><a href="{{ url_for('student', student_id=student.id) }}">{{ student.name }}</a></td>
                             {% for score in scores_labels %}
-                                <td><input type="checkbox" name="{{ score.name }}_{{ student.id }}"></td>
+                                <td class="text-center align-middle">
+                                    <input type="checkbox" name="{{ score.name }}_{{ student.id }}">
+                                </td>
                             {% endfor %}
                         </tr>
                         <tr class="expanded-row d-none" id="notesRow_{{ student.id }}">
@@ -80,19 +73,25 @@
                 </tbody>
             </table>
             </div>
-            <div class="actions text-center">
-                <input type="submit" class="btn btn-primary" value="حفظ">
-            </div>
+
+            <footer class="footer">
+                <div class="container p-0">
+                    <div class="d-grid">
+                        <input type="submit" class="btn btn-primary btn-lg w-100" value="حفظ">
+                    </div>
+                </div>
+            </footer>
         </form>
+
     </div>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Get the current date
         const today = new Date();
-        
+
         // Format the date as YYYY-MM-DD
         const formattedDate = today.toISOString().split('T')[0];
-        
+
         // Set the default value of the date input field
         document.getElementById("lesson_date").value = formattedDate;
         document.getElementById("attendanceForm").addEventListener("submit", saveAttendance);
@@ -105,6 +104,21 @@
                 btn.classList.toggle('bi-check-lg');
             });
         });
+
+        // <div className="col text-start">
+        //     <button className="btn btn-outline-primary" type="button" onClick="openStudentForm()">
+        //         <i className="bi bi-person-plus"></i>
+        //         <span className="d-none d-sm-inline">اضافة طالب</span>
+        //     </button>
+        // </div>
+        let addStudentBtn = document.createElement("button");
+        addStudentBtn.className = "btn btn-outline-primary";
+        addStudentBtn.innerHTML = `<i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">اضافة طالب</span>`;
+        addStudentBtn.onclick = openStudentForm;
+        addNavLink(addStudentBtn);
+        document.getElementById("navbar-title").innerText = "{{ class_name }}";
+
+
         // // add event listener for form click. if one checkbox is checked, enable submit button. if none is checked, disable it.
         // document.getElementById("scoresTable").addEventListener("click", function (e) {
         //     const submitButton = document.querySelector('input[type="submit"]');
@@ -112,7 +126,6 @@
         //     const checked = Array.from(checkboxes).some(checkbox => checkbox.checked);
         //     submitButton.disabled = !checked;
         // });
-
 
 
         fetchAndUpdateAttendance(formattedDate);

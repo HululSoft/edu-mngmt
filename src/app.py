@@ -180,8 +180,9 @@ def add_class(teacher_id, class_id):
 @login_required
 def add_teacher():
     teacher_name = request.form['teacher_name']
+    teacher_username = request.form['teacher_username']
     password = request.form['teacher_password']
-    data_manager.add_new_teacher(teacher_name, password)
+    data_manager.add_new_teacher(teacher_name, teacher_username, password)
     return redirect(url_for('admin'))
 
 # route for add new class

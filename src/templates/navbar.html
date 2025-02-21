@@ -1,0 +1,34 @@
+{% set current_page = request.endpoint %}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light" id="app-navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand" id="navbar-title" href="{{ url_for('select_class') }}">متابعة صفية</a>
+<!--        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">-->
+<!--            <span class="navbar-toggler-icon"></span>-->
+<!--        </button>-->
+
+        <div id="navbarNav" style="display: inline-flex">
+            <span class="extra-links">
+            </span>
+            <ul class="navbar-nav">
+
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">خروج</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script>
+    function addNavLink(element, left = true) {
+       // add element to extra-links
+        let extraLinks = document.querySelector('.extra-links');
+        if (left) {
+            extraLinks.insertBefore(element, extraLinks.firstChild);
+        } else {
+            extraLinks.appendChild(element);
+        }
+    }
+</script>

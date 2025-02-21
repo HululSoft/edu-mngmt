@@ -2,7 +2,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f0f2f5;
     margin: 0;
-    padding: 20px 0;
+    padding: 0;
     color: #333;
     direction: rtl; /* Right-to-left text direction */
 }
@@ -48,4 +48,12 @@ body {
 
 .with-notes {
     color: #ff0000;
+}
+
+.footer {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    padding: 10px 0;
+    text-align: center;
 }

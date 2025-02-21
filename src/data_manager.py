@@ -471,26 +471,28 @@ class DataManager:
         with open(self.teachers_file, 'w', encoding='utf-8') as file:
             json.dump(teachers, file, indent=4, ensure_ascii=False)
 
-    def add_new_teacher(self, teacher_name, password):
+    def add_new_teacher(self, teacher_name, teacher_username, password):
         """
         Add a new teacher to the database.
         """
         if not teacher_name:
             raise ValueError("Teacher name cannot be empty.")
+        if not teacher_username:
+            raise ValueError("Teacher username cannot be empty.")
         if not password:
             raise ValueError("Password cannot be empty.")
 
         # Check if teacher name is unique
-        existing_teacher = self.db_session.query(Teacher).filter_by(name=teacher_name).first()
+        existing_teacher = self.db_session.query(Teacher).filter_by(username=teacher_username).first()
         if existing_teacher:
-            raise ValueError(f"Teacher with name '{teacher_name}' already exists.")
+            raise ValueError(f"Teacher with username '{teacher_username}' already exists.")
 
         # Base64 encode the password
         encoded_password = base64.b64encode(password.encode()).decode()
 
         try:
             # Create a new teacher and add to the database
-            new_teacher = Teacher(name=teacher_name, password=encoded_password)
+            new_teacher = Teacher(name=teacher_name, password=encoded_password, username=teacher_username)
             self.db_session.add(new_teacher)
             self.db_session.commit()
             return {"status": "success", "message": f"Teacher '{teacher_name}' added successfully."}

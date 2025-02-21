@@ -7,7 +7,6 @@
 {% block content %}
 
 <div class="container mt-5">
-    <h1 class="mb-4">معلومات الطالب</h1>
 
     {% if error %}
     <div class="alert alert-danger">
@@ -112,6 +111,17 @@
         this.method = 'POST';
         this.submit();
 
+    });
+
+    // set navbar-title to student name on page load, or "New Student" if no student
+    document.addEventListener('DOMContentLoaded', function () {
+        let studentName = document.getElementById('studentName').value;
+        let navbarTitle = document.getElementById('navbar-title');
+        if (studentName) {
+            navbarTitle.textContent = studentName;
+        } else {
+            navbarTitle.textContent = 'إضافة طالب جديد';
+        }
     });
 
 </script>
