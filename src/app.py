@@ -63,7 +63,7 @@ def admin():
     teachers = data_manager.load_teachers()
     classes = data_manager.load_classes()
     teachers_with_assigned_classes = data_manager.get_teachers_with_assigned_classes()
-    
+
     return render_template('management.html', teachers=teachers, classes=classes,teachers_with_assigned_classes=teachers_with_assigned_classes)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -88,7 +88,7 @@ def validate_password(stored_encrypted_password: str, input_password: str) -> bo
 def decrypt_password(encrypted_password: str) -> str:
     # Decode the Base64 string back to bytes, then decode to a plaintext string
     return base64.b64decode(encrypted_password.encode()).decode()
-    
+
 @app.route('/select_class')
 @login_required
 def select_class():
@@ -108,6 +108,8 @@ def attendance(class_id):
 
         student_notes = request.form['notes'] # a json string like this: '{"32": {<score_label>: "some notes"} }' where 32 is the student id
         student_notes = eval(student_notes)
+        lesson_subject = request.form['lesson_subject']
+        lesson_activity = request.form['lesson_activity']
         students_score_data = dict()
         for student in students:
             student_id = student['id']
@@ -118,12 +120,12 @@ def attendance(class_id):
                     'notes': student_notes.get(str(student_id), {}).get(score['name'], None)
                 }
             students_score_data[student_id] = new_score
-        data_manager.save_scores(lesson_date, students_score_data)
+        data_manager.save_scores(class_id, lesson_date, students_score_data, lesson_subject, lesson_activity)
 
     class_name = data_manager.get_class_by_id(class_id)['name']
     students = data_manager.get_students_by_class(class_id)
     scores_labels = data_manager.load_score_labels()
-    return render_template('attendance.html', students=students, class_id=class_id, scores_labels=scores_labels, class_name=class_name)
+    return render_template('attendance.html', students=students, class_id=class_id, scores_labels=scores_labels, class_name=class_name, lesson_subject='', lesson_activity='')
 
 # route for attendance data. accepts a class id and a specific date. GET method. return json data
 @app.route('/attendance_data/<int:class_id>/<date>')
@@ -144,20 +146,20 @@ def monthly_report(class_id, student_id):
         class_data = data_manager.get_class_by_id(class_id)
         scores_labels=data_manager.load_score_labels()
         teacher_name = data_manager.get_teacher_name(session['teacher_id'])
-        
+
         report = data_manager.get_monthly_report(student_id, class_id, month,year)
         print("scores_labels=",scores_labels)
         return render_template(
-            'report_template.html', 
-            student=student, 
-            class_data=class_data, 
+            'report_template.html',
+            student=student,
+            class_data=class_data,
             scores=report,
             scores_labels=scores_labels,
-            month=month, 
+            month=month,
             year=year,
             teacher_name=teacher_name
         )
-        
+
     return render_template('monthly_report_form.html', class_id=class_id, student_id=student_id)
 
 
@@ -168,6 +170,13 @@ def remove_class(teacher_id, class_id):
     return redirect(url_for('admin'))
 
 
+
+# route for deleting a lesson by date and class id
+@app.route('/lessons/<int:class_id>/<date>', methods=['DELETE'])
+@login_required
+def delete_lesson(class_id, date):
+    data_manager.delete_lesson(date, class_id)
+    return redirect(url_for('attendance', class_id=class_id))
 
 @app.route('/add_class/<int:teacher_id>/<int:class_id>')
 @login_required

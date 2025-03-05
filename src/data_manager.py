@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import or_
-from models import Class, Teacher, ClassTeacher, Student, Score, Criteria
+from models import Class, Teacher, ClassTeacher, Student, Score, Criteria, LessonInfo
 
 
 class DataManager:
@@ -218,6 +218,13 @@ class DataManager:
             # Flatten the results into a list
             scores = list(scores_by_student.values())
 
+            # Get lesson_subject and lesson_activity from LessonInfo table
+            lesson_info = self.db_session.query(LessonInfo).filter_by(lesson_date=lesson_date_obj, class_id=class_id).first()
+            lesson_subject = lesson_activity = None
+            if lesson_info:
+                lesson_subject = lesson_info.lesson_subject
+                lesson_activity = lesson_info.lesson_activity
+
             # Step 4: Include adjacent dates if required
             if include_adjacent_dates:
                 # Query distinct lesson dates for the class
@@ -244,16 +251,40 @@ class DataManager:
                     "scores": scores,
                     "previous_date": previous_date,
                     "next_date": next_date,
+                    "lesson_subject": lesson_subject,
+                    "lesson_activity": lesson_activity
                 }
 
             # Step 5: Return scores for the specific date only
-            return {"scores": scores}
+            return {"scores": scores, "lesson_subject": lesson_subject, "lesson_activity": lesson_activity}
 
         except SQLAlchemyError as e:
             raise ValueError(f"Database error: Unable to fetch scores. {str(e)}")
 
+    # a function to delete the whole lesson scores for a specific date and class id
+    def delete_lesson(self, lesson_date, class_id):
+        """
+        Delete all scores for a specific lesson date and class ID.
+        """
+        try:
+            # Convert string date to a datetime object
+            lesson_date_obj = datetime.strptime(lesson_date, '%Y-%m-%d').date()
+
+            # get students for this class
+            students = self.get_students_by_class(class_id)
+            student_ids = [student['id'] for student in students]
+            # Delete all scores for the specified lesson date and class ID
+            self.db_session.query(Score).filter(Score.lesson_date==lesson_date_obj, Score.student_id.in_(student_ids)).delete()
+            # Delete lesson info
+            self.db_session.query(LessonInfo).filter_by(lesson_date=lesson_date_obj, class_id=class_id).delete()
+            self.db_session.commit()
+            return {"status": "success", "message": "Lesson scores deleted successfully."}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            raise ValueError(f"Database error: Unable to delete lesson scores. {str(e)}")
+
     # students_score_data is a disct with student_id as key and value as a dict of scores
-    def save_scores(self, lesson_date, students_score_data):
+    def save_scores(self, class_id, lesson_date, students_score_data, lesson_subject = None, lesson_activity = None):
         """
         Save scores for all students in a class on a specific lesson date.
 
@@ -305,17 +336,15 @@ class DataManager:
                         )
                         scores_to_insert.append(new_score)
 
-            # Check if all attendance scores are False, delete all scores for the date
-            all_attendance_scores = [score for score in scores_to_update + scores_to_insert if
-                                     score.criteria_id == criteria_map.get("attendance")]
-            if all_attendance_scores and all(not score.value for score in all_attendance_scores):
-                score_ids = [score.id for score in existing_scores_query]
+            # save or update lesson info: subject and activity
+            lesson_info = self.db_session.query(LessonInfo).filter_by(lesson_date=lesson_date_obj, class_id=class_id).first()
+            if lesson_info:
+                lesson_info.lesson_subject = lesson_subject
+                lesson_info.lesson_activity = lesson_activity
+            else:
+                lesson_info = LessonInfo(lesson_date=lesson_date_obj, class_id=class_id, lesson_subject=lesson_subject, lesson_activity=lesson_activity)
+                self.db_session.add(lesson_info)
 
-                if score_ids:  # Ensure there's something to delete
-                    self.db_session.query(Score).filter(Score.id.in_(score_ids)).delete(synchronize_session=False)
-                    self.db_session.commit()
-
-                return {"status": "success", "message": "All attendance scores are False. Deleted all scores for the date."}
 
             if scores_to_update:
                 self.db_session.bulk_save_objects(scores_to_update)

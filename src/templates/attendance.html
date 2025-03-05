@@ -35,6 +35,23 @@
             <div class="col text-center mt-2">
                 <input type="date" id="lesson_date" name="lesson_date" class="mb-2 p-2" required>
             </div>
+
+            <div class="row align-items-center mb-3 g-1">
+                <div class="form-group col-10 form-floating">
+                    <input type="text" class="form-control form-control-sm" id="lesson_subject" placeholder="مثال: درس عن أخلاق الرسول ﷺ" required>
+                    <label for="lesson_subject" class="text-end w-100">موضوع الدرس</label>
+                </div>
+                <div class="form-group col-2" id="addActivityBtn">
+                    <button type="button" class="btn btn-outline-primary" style="font-size: 0.9rem" onclick="showActivityField()">+ فعالية</button>
+                </div>
+            </div>
+
+            <div class="row mt-3 no-gutters mb-3" id="activityField" style="display: none;">
+                <div class="col-12 col-md-12 form-floating">
+                    <input type="text" class="form-control" id="lesson_activity" placeholder="الفعالية التربوية">
+                    <label for="lesson_activity" class="text-end w-100">الفعالية التربوية</label>
+                </div>
+            </div>
             <div class="table-responsive">
             <table id="scoresTable" class="table table-bordered table-hover">
                 <thead>
@@ -97,7 +114,7 @@
         document.getElementById("attendanceForm").addEventListener("submit", saveAttendance);
         document.querySelectorAll('.addNotes').forEach(btn => {
             btn.addEventListener('click', () => {
-                studentId = btn.closest('tr').id.split('_')[1]
+                const studentId = btn.closest('tr').id.split('_')[1];
                 const notesRow = document.querySelector('#notesRow_' + studentId);
                 notesRow.classList.toggle('d-none');
                 btn.classList.toggle('bi-pencil-square');
@@ -105,31 +122,28 @@
             });
         });
 
-        // <div className="col text-start">
-        //     <button className="btn btn-outline-primary" type="button" onClick="openStudentForm()">
-        //         <i className="bi bi-person-plus"></i>
-        //         <span className="d-none d-sm-inline">اضافة طالب</span>
-        //     </button>
-        // </div>
+
         let addStudentBtn = document.createElement("button");
         addStudentBtn.className = "btn btn-outline-primary";
         addStudentBtn.innerHTML = `<i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">اضافة طالب</span>`;
         addStudentBtn.onclick = openStudentForm;
         addNavLink(addStudentBtn);
-        document.getElementById("navbar-title").innerText = "{{ class_name }}";
-
-
-        // // add event listener for form click. if one checkbox is checked, enable submit button. if none is checked, disable it.
-        // document.getElementById("scoresTable").addEventListener("click", function (e) {
-        //     const submitButton = document.querySelector('input[type="submit"]');
-        //     const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
-        //     const checked = Array.from(checkboxes).some(checkbox => checkbox.checked);
-        //     submitButton.disabled = !checked;
-        // });
-
+        setNavbarTitle("{{ class_name }}");
 
         fetchAndUpdateAttendance(formattedDate);
     });
+
+    function showActivityField() {
+        document.getElementById("activityField").style.display = "block";
+        document.getElementById("addActivityBtn").style.display = "none";
+        document.getElementById("lesson_subject").closest("div").classList.remove("col-10");
+    }
+
+    function hideActivityField() {
+        document.getElementById("activityField").style.display = "none";
+        document.getElementById("addActivityBtn").style.display = "block";
+        document.getElementById("lesson_subject").closest("div").classList.add("col-10");
+    }
 
     async function saveAttendance(e) {
         e.preventDefault();
@@ -138,9 +152,22 @@
         const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
         const checked = Array.from(checkboxes).some(checkbox => checkbox.checked);
         if (!checked) {
-            if (!confirm("لم يتم تحديد أي طلاب لهذا اليوم. اللقاء غير محتسب. هل تريد المتابعة؟")) {
+            if (!confirm("لم يتم تحديد أي طلاب لهذا اليوم. اللقاء غير محتسب. هل تريد حذف اللقاء؟")) {
                 return;
+            } else {
+                try {
+                    showBlurOverlay();
+                    await fetch(`/lessons/{{ class_id }}/${document.getElementById("lesson_date").value}`, {
+                        method: "DELETE"
+                    });
+                    location.reload();
+                } catch (error) {
+                    console.error("Error deleting lesson:", error);
+                } finally {
+                    hideBlurOverlay();
+                }
             }
+            return
         }
 
         const formData = new FormData(document.getElementById("attendanceForm"));
@@ -157,6 +184,8 @@
 
         // add notes to the form data
         formData.set('notes', JSON.stringify(notes));
+        formData.set('lesson_subject', document.getElementById('lesson_subject').value);
+        formData.set('lesson_activity', document.getElementById('lesson_activity').value);
         try {
             showBlurOverlay();
             // Send the form data to the server
@@ -198,6 +227,10 @@
     });
 
     function resetTable() {
+
+        const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+
         // remove class "table-danger" from all rows
         const rows = document.querySelectorAll("#scoresTable tbody tr");
         rows.forEach(row => row.classList.remove("table-danger"));
@@ -253,13 +286,22 @@
                     nextDateElement.querySelector("span").innerText = "";
                     nextDateElement.querySelector("button").disabled = true;
                 }
+                // set lesson_subject and lesson_activity
+                document.getElementById('lesson_subject').value = data.lesson_subject || " ";
+                document.getElementById('lesson_activity').value = data.lesson_activity || "";
+                // show activity field if lesson_activity is not empty
+                if (data.lesson_activity) {
+                    showActivityField();
+                } else {
+                    hideActivityField();
+                }
+                if (!data.scores || data.scores.length === 0) {
+                    console.log("No attendance data found for the selected date and class.", data);
+                    return;
+                }
             }
-            if (!data.scores || data.scores.length === 0) {
-                const checkboxes = document.querySelectorAll("#scoresTable input[type='checkbox']");
-                checkboxes.forEach(checkbox => checkbox.checked = false);
-                console.log("No attendance data found for the selected date and class.", data);
-                return;
-            }
+
+
             // Update the DOM with the fetched data
             data.scores.forEach(studentScores => {
                 const studentRow = document.querySelector(`tr[id="studentId_${studentScores.student_id}"]`);

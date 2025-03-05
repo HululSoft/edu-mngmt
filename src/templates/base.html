@@ -23,4 +23,10 @@
 
 </body>
 {% block scripts %}{% endblock %}
+
+{% if request.endpoint != 'login' %}
+    <script>
+        window.onload=function(){localStorage.setItem("prev_page", location.href)}
+    </script>
+{% endif %}
 </html>

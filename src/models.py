@@ -67,3 +67,17 @@ class Criteria(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     label = db.Column(db.String(255), nullable=False)
+
+
+class LessonInfo(db.Model):
+    __tablename__ = 'lesson_info'
+    __table_args__ = {'schema': get_schema()}  # Use the configured schema
+
+    id = db.Column(db.Integer, primary_key=True)
+    class_id = db.Column(db.Integer, db.ForeignKey(f'{get_schema()}.classes.id'), nullable=False)
+    lesson_date = db.Column(db.Date, nullable=False, unique=True)
+    lesson_subject = db.Column(db.String(400), nullable=False)
+    lesson_activity = db.Column(db.String(400), nullable=False)
+
+    # Relationships
+    class_ = db.relationship('Class', backref='lesson_info', lazy=True)

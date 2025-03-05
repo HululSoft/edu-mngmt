@@ -2,10 +2,12 @@
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light" id="app-navbar">
     <div class="container-fluid">
-        <a class="navbar-brand" id="navbar-title" href="{{ url_for('select_class') }}">متابعة صفية</a>
-<!--        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">-->
-<!--            <span class="navbar-toggler-icon"></span>-->
-<!--        </button>-->
+        {% if current_page != 'select_class' %}
+            <a class="navbar-brand back-link" href="#" onclick="goBack()">
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        {% endif %}
+        <a class="navbar-brand" id="navbar-title">متابعة صفية</a>
 
         <div id="navbarNav" style="display: inline-flex">
             <span class="extra-links">
@@ -30,5 +32,14 @@
         } else {
             extraLinks.appendChild(element);
         }
+    }
+
+    function setNavbarTitle(title) {
+        document.getElementById('navbar-title').innerText = title;
+    }
+
+    function goBack() {
+        console.log('going back');
+        window.history.back();
     }
 </script>

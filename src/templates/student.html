@@ -116,11 +116,10 @@
     // set navbar-title to student name on page load, or "New Student" if no student
     document.addEventListener('DOMContentLoaded', function () {
         let studentName = document.getElementById('studentName').value;
-        let navbarTitle = document.getElementById('navbar-title');
         if (studentName) {
-            navbarTitle.textContent = studentName;
+            setNavbarTitle(studentName);
         } else {
-            navbarTitle.textContent = 'إضافة طالب جديد';
+            setNavbarTitle('إضافة طالب جديد');
         }
     });
 
