@@ -11,8 +11,9 @@ app = Flask(__name__)
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@postgres:5432/school_management'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['DB_SCHEMA'] = os.getenv('DB_SCHEMA', 'school_management')  # Default schema
 
 app.secret_key = 'supersecretkey'
 

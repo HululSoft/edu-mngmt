@@ -13,7 +13,7 @@ COPY src /app
 COPY gunicorn.conf.py /app
 
 # Copy the entrypoint script to the container
-COPY entrypoint.sh entrypoint.sh
+COPY entrypoint.sh /app
 
 # Ensure the entrypoint script has execute permissions
 RUN chmod +x entrypoint.sh
@@ -35,6 +35,7 @@ VOLUME /app/data
 RUN chmod +x entrypoint.sh
 RUN ls /app/
 # Set the entrypoint script
-ENTRYPOINT ["./entrypoint.sh"]
+#ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:app"]

@@ -4,7 +4,7 @@ import os
 db = SQLAlchemy()
 
 def get_schema():
-    return os.getenv('DB_SCHEMA', 'default_schema')
+    return os.getenv('DB_SCHEMA', 'public')
 
 class Teacher(db.Model):
     __tablename__ = 'teachers'
