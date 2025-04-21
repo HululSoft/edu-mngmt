@@ -494,6 +494,7 @@ class DataManager:
         # create a new teacher dictionary
         # password show be base64 encoded before saving
         encoded_password = base64.b64encode(password.encode()).decode()
+        # encoded_password = password
         new_teacher = {'id': max_teacher_id + 1, 'name': teacher_name, 'password': encoded_password}
         teachers.append(new_teacher)
         # save the updated teachers list to the file
@@ -518,6 +519,7 @@ class DataManager:
 
         # Base64 encode the password
         encoded_password = base64.b64encode(password.encode()).decode()
+		# encoded_password = password
 
         try:
             # Create a new teacher and add to the database
