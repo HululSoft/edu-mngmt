@@ -217,9 +217,17 @@ def student(student_id):
 @app.route('/students/new', methods=['GET', 'POST'])
 @login_required
 def add_student():
-    classes = data_manager.get_classes_by_teacher(session['teacher_id'])
+    # Load all classes for admin, or teacher's classes for regular teachers
+    if request.referrer and 'manage_students' in request.referrer:
+        # Coming from admin management page - show all classes
+        classes = data_manager.load_classes()
+    else:
+        # Coming from teacher page - show only teacher's classes
+        classes = data_manager.get_classes_by_teacher(session['teacher_id'])
+
     if request.method == 'GET':
         return render_template('student.html', classes=classes, student={})
+
     student_name = request.form['name']
     class_id = int(request.form['class'])
     phone_number = request.form['phone']
@@ -230,7 +238,12 @@ def add_student():
     except Exception as e:
         print(e)
         return render_template('student.html', error=str(e), student=request.form, classes=classes), 400
-    return redirect(url_for('attendance', class_id=class_id))
+
+    # Redirect back to manage_students if coming from admin, otherwise to attendance
+    if request.referrer and 'manage_students' in request.referrer:
+        return redirect(url_for('manage_students'))
+    else:
+        return redirect(url_for('attendance', class_id=class_id))
 
 
 # route for update_student. it accepts FormData for a student id
@@ -273,6 +286,36 @@ def internal_data():
 def logout():
     session.pop('teacher_id', None)
     return redirect(url_for('login'))
+
+@app.route('/manage_students')
+@login_required
+def manage_students():
+    students = data_manager.get_all_students_with_details()
+    classes = data_manager.load_classes()
+    return render_template('manage_students.html', students=students, classes=classes)
+
+@app.route('/update_student_admin/<int:student_id>', methods=['POST'])
+@login_required
+def update_student_admin(student_id):
+    name = request.form.get('name')
+    phone = request.form.get('phone')
+    parent_phone = request.form.get('parent_phone')
+    date_joined = request.form.get('date_joined')
+    status = request.form.get('status') == 'true'
+    class_id = int(request.form.get('class_id'))
+
+    data_manager.update_student_admin(student_id, name, phone, parent_phone, date_joined, status, class_id)
+    return redirect(url_for('manage_students'))
+
+@app.route('/delete_student_permanently/<int:student_id>', methods=['POST'])
+@login_required
+def delete_student_permanently(student_id):
+    try:
+        data_manager.delete_student_permanently(student_id)
+        return redirect(url_for('manage_students'))
+    except Exception as e:
+        # Handle error gracefully
+        return redirect(url_for('manage_students'))
 
 if __name__ == '__main__':
     app.run(debug=True)

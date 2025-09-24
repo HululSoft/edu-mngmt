@@ -601,21 +601,11 @@ class DataManager:
         Update a student's details in the database.
         """
         try:
-            # Validate: Check if a student with the same name but a different ID exists
-            existing_student = (
-                self.db_session.query(Student)
-                .filter(Student.name == student_name, Student.id != student_id)
-                .first()
-            )
-            if existing_student:
-                raise ValueError(f"Student with name '{student_name}' already exists.")
-
-            # Find the student to update
             student = self.db_session.query(Student).filter_by(id=student_id).first()
             if not student:
-                raise ValueError(f"Student with ID '{student_id}' does not exist.")
+                raise ValueError(f"Student with ID {student_id} not found.")
 
-            # Update the student details
+            # Update student details
             student.name = student_name
             student.class_id = class_id
             student.phone = phone_number
@@ -623,46 +613,126 @@ class DataManager:
             student.date_joined = datetime.strptime(join_date, "%Y-%m-%d") if join_date else None
             student.active = active
 
-            # Commit the changes to the database
+            if not active:
+                student.inactive_date = datetime.now().date()
+            else:
+                student.inactive_date = None
+
             self.db_session.commit()
             return {"status": "success", "message": f"Student '{student_name}' updated successfully."}
-        except ValueError as e:
-            self.db_session.rollback()  # Rollback transaction in case of a validation error
-            raise ValueError(str(e))
-        except SQLAlchemyError as e:
-            self.db_session.rollback()  # Rollback transaction in case of a database error
-            raise ValueError("Database error: Unable to update student. Please try again later, or contact support.")
-
-    def set_student_active(self, student_id, active=True):
-        """
-        Activate a student in the database.
-        """
-        try:
-            # Find the student by ID
-            student = self.db_session.query(Student).filter_by(id=student_id).first()
-            if not student:
-                return {"status": "error", "message": f"Student with ID {student_id} does not exist."}
-
-            student.active = active
-            student.inactive_date = None if active else datetime.now()
-            self.db_session.commit()
-
-            return {"status": "success",
-                    "message": f"Student with ID {student_id} marked as {'active' if active else 'inactive'}."}
         except SQLAlchemyError as e:
             self.db_session.rollback()
-            raise ValueError(
-                f"Database error. Unable to mark student as {'active' if active else 'inactive'}. Please try again later.")
+            raise ValueError(f"Database error: Unable to update student. {str(e)}")
 
+    def get_all_students_with_details(self):
+        """
+        Get all students with their complete details from the database.
+        """
+        students = self.db_session.query(Student).order_by(Student.name).all()
+        return [
+            {
+                'id': student.id,
+                'name': student.name,
+                'phone': student.phone,
+                'parent_phone': student.parent_phone,
+                'date_joined': student.date_joined.isoformat() if student.date_joined else None,
+                'active': student.active,
+                'class_id': student.class_id
+            }
+            for student in students
+        ]
 
-def count_fridays(year: str, month: str) -> int:
-    year = int(year)
-    month = int(month)
+    def update_student_admin(self, student_id, name, phone, parent_phone, date_joined, active, class_id):
+        """
+        Update student information from admin management page.
+        """
+        try:
+            student = self.db_session.query(Student).filter_by(id=student_id).first()
+            if not student:
+                raise ValueError(f"Student with ID {student_id} not found.")
 
-    # Get a list of all days in the month and their corresponding weekdays
-    month_days = calendar.monthcalendar(year, month)
+            # Update student details
+            student.name = name
+            student.phone = phone
+            student.parent_phone = parent_phone
+            student.date_joined = datetime.strptime(date_joined, "%Y-%m-%d") if date_joined else None
+            student.active = active
+            student.class_id = class_id
 
-    # Count Fridays (weekday 4)
-    friday_count = sum(1 for week in month_days if week[calendar.FRIDAY] != 0)
+            if not active:
+                student.inactive_date = datetime.now().date()
+            else:
+                student.inactive_date = None
 
-    return friday_count
+            self.db_session.commit()
+            return {"status": "success", "message": f"Student '{name}' updated successfully."}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            raise ValueError(f"Database error: Unable to update student. {str(e)}")
+
+    def set_student_active(self, student_id, active):
+        """
+        Set a student's active status.
+        """
+        try:
+            student = self.db_session.query(Student).filter_by(id=student_id).first()
+            if not student:
+                raise ValueError(f"Student with ID {student_id} not found.")
+
+            student.active = active
+            if not active:
+                student.inactive_date = datetime.now().date()
+            else:
+                student.inactive_date = None
+
+            self.db_session.commit()
+            return {"status": "success", "message": f"Student status updated successfully."}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            raise ValueError(f"Database error: Unable to update student status. {str(e)}")
+
+    def get_all_data(self):
+        """
+        Get all data for internal debugging purposes.
+        """
+        return {
+            "teachers": self.load_teachers(),
+            "classes": self.load_classes(),
+            "students": self.get_all_students_with_details()
+        }
+
+    def delete_student_permanently(self, student_id):
+        """
+        Permanently delete a student from the database.
+        This will also delete all associated scores.
+        """
+        try:
+            # First delete all scores associated with this student
+            self.db_session.query(Score).filter_by(student_id=student_id).delete()
+
+            # Then delete the student record
+            student = self.db_session.query(Student).filter_by(id=student_id).first()
+            if student:
+                self.db_session.delete(student)
+                self.db_session.commit()
+                return {"status": "success", "message": f"Student with ID {student_id} permanently deleted."}
+            else:
+                return {"status": "not_found", "message": f"Student with ID {student_id} not found."}
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            raise ValueError(f"Database error: Unable to delete student permanently. {str(e)}")
+
+def count_fridays(year, month):
+    """
+    Count the number of Fridays in a given month and year.
+    """
+    # Get the number of days in the month
+    days_in_month = calendar.monthrange(year, month)[1]
+
+    # Count Fridays
+    fridays = 0
+    for day in range(1, days_in_month + 1):
+        if datetime(year, month, day).weekday() == 4:  # Friday is 4 (Monday is 0)
+            fridays += 1
+
+    return fridays

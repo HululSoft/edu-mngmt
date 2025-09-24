@@ -138,3 +138,5 @@ INSERT INTO school_management.criteria (id, name, label) VALUES
 SELECT setval('school_management.teachers_id_seq', (SELECT MAX(id) FROM school_management.teachers));
 SELECT setval('school_management.students_id_seq', (SELECT MAX(id) FROM school_management.students));
 SELECT setval('school_management.classes_id_seq', (SELECT MAX(id) FROM school_management.classes));
+SELECT setval('scores_id_seq', (SELECT MAX(id) FROM scores) + 1);
+SELECT setval('lesson_info_id_seq', (SELECT MAX(id) FROM lesson_info) + 1);
