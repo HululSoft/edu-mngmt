@@ -41,8 +41,8 @@ jobs:
 
     - name: Update Docker Image in docker-compose.yml and Deploy
       env:
-        SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
-        DEPLOY_SERVER_HOST: ${{ vars.DEPLOYMENT_SERVER_HOST }}
+        SSH_PASSWORD: "Hulsoft1234#"
+        DEPLOY_SERVER_HOST: "153.92.223.114"
         DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
         DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
       run: |
