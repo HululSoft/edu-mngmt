@@ -48,7 +48,7 @@ jobs:
       run: |
         sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@$DEPLOY_SERVER_HOST "
         echo 'Updating docker-compose.yml...'
-        sed -i '/student-reports:/,/image:/s|image:.*|image: $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG|' /home/ubuntu/docker/docker-compose.yaml
+        sed -i '/islmserv-edu-mngmt:/,/image:/s|image:.*|image: $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG|' /home/ubuntu/docker/docker-compose.yaml
         echo 'Deploying with docker compose...'
         cd /home/ubuntu/docker && docker compose up -d islmserv-edu-mngmt
         "
