@@ -52,6 +52,16 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'teacher_id' not in session:
+            return redirect(url_for('login'))
+        if not data_manager.is_teacher_admin(session['teacher_id']):
+            return "Forbidden", 403 # Or redirect to a non-admin page
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
 @login_required
 def index():
@@ -59,6 +69,7 @@ def index():
 
 # adding a route for admin: /admin. this will allow admin, to assign teachers to classes, add new teachers, and add new classes
 @app.route('/admin')
+@admin_required
 def admin():
     teachers = data_manager.load_teachers()
     classes = data_manager.load_classes()
@@ -95,8 +106,8 @@ def select_class():
     teacher_id = session['teacher_id']
     classes = data_manager.get_classes_by_teacher(teacher_id)
     teacher_name = data_manager.get_teacher_name(teacher_id)
-
-    return render_template('select_class.html', teacher_name=teacher_name, classes=classes)
+    is_admin = data_manager.is_teacher_admin(teacher_id)
+    return render_template('select_class.html', teacher_name=teacher_name, classes=classes, is_admin=is_admin)
 
 @app.route('/attendance/<int:class_id>', methods=['GET', 'POST'])
 @login_required
@@ -164,7 +175,7 @@ def monthly_report(class_id, student_id):
 
 
 @app.route('/remove_class/<int:teacher_id>/<int:class_id>')
-@login_required
+@admin_required
 def remove_class(teacher_id, class_id):
     data_manager.unassign_class_from_teacher(teacher_id, class_id)
     return redirect(url_for('admin'))
@@ -179,14 +190,14 @@ def delete_lesson(class_id, date):
     return redirect(url_for('attendance', class_id=class_id))
 
 @app.route('/add_class/<int:teacher_id>/<int:class_id>')
-@login_required
+@admin_required
 def add_class(teacher_id, class_id):
     # Add the class to the teacher's classes
     data_manager.assign_class_to_teacher(teacher_id, class_id)
     return redirect(url_for('admin'))
 
 @app.route('/add_teacher', methods=['POST'])
-@login_required
+@admin_required
 def add_teacher():
     teacher_name = request.form['teacher_name']
     teacher_username = request.form['teacher_username']
@@ -196,7 +207,7 @@ def add_teacher():
 
 # route for add new class
 @app.route('/add_new_class', methods=['POST'])
-@login_required
+@admin_required
 def add_new_class():
     class_name = request.form['class_name']
     # get the teacher id from the form as integer

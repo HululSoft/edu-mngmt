@@ -1,3 +1,4 @@
+{%  set page_title = "إدارة الطلاب" %}
 {% extends 'base.html' %}
 {% block head %}
 {% endblock %}
@@ -237,9 +238,6 @@
     </style>
 
 <div class="form-container">
-    <a href="{{ url_for('admin') }}" class="back-btn">العودة للإدارة</a>
-    <h1>إدارة الطلاب</h1>
-
     <div class="search-container">
         <a href="{{ url_for('add_student') }}" class="add-student-btn">إضافة طالب جديد</a>
         <input type="text" id="searchInput" class="search-input" placeholder="البحث بالاسم..." onkeyup="filterStudents()">

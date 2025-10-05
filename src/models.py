@@ -13,6 +13,7 @@ class Teacher(db.Model):
     name = db.Column(db.String(100), nullable=False)
     username = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String, nullable=False)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
     # Relationship with ClassTeacher
     class_teachers = db.relationship('ClassTeacher', backref='teacher', lazy=True)

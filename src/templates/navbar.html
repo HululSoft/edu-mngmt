@@ -1,20 +1,25 @@
 {% set current_page = request.endpoint %}
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light" id="app-navbar">
-    <div class="container-fluid">
-        {% if current_page != 'select_class' %}
-            <a class="navbar-brand back-link" href="#" onclick="goBack()">
-                <i class="bi bi-arrow-right"></i>
-            </a>
-        {% endif %}
-        <a class="navbar-brand" id="navbar-title">متابعة صفية</a>
-
-        <div id="navbarNav" style="display: inline-flex">
-            <span class="extra-links">
-            </span>
+<nav class="navbar" id="app-navbar">
+    <div class="navbar-container">
+        <div class="navbar-back">
+            {% if current_page != 'select_class' %}
+                <a class="navbar-brand back-link" href="#" onclick="goBack()">
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            {% endif %}
+        </div>
+        <div class="navbar-center">
+            <a class="navbar-brand" id="navbar-title">{{ page_title }}</a>
+        </div>
+        <div class="navbar-left">
+            <span class="extra-links"></span>
             <ul class="navbar-nav">
-
-
+                <li class="nav-item">
+                    {% if current_page == 'select_class' and is_admin %}
+                        <a class="nav-link admin-link" href="{{ url_for('admin') }}">إدارة المدرسة</a>
+                    {% endif %}
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('logout') }}">خروج</a>
                 </li>
@@ -25,7 +30,6 @@
 
 <script>
     function addNavLink(element, left = true) {
-       // add element to extra-links
         let extraLinks = document.querySelector('.extra-links');
         if (left) {
             extraLinks.insertBefore(element, extraLinks.firstChild);
@@ -39,7 +43,109 @@
     }
 
     function goBack() {
-        console.log('going back');
         window.history.back();
     }
 </script>
+
+<style>
+.navbar {
+    background: #e2e8f0; /* much lighter, soft gray */
+    color: #222;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.navbar-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    box-sizing: border-box;
+}
+
+.navbar-back {
+    display: flex;
+    align-items: center;
+    min-width: 40px;
+}
+
+.navbar-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.navbar-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-brand, .extra-links, .navbar-nav {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-brand {
+    color: #222;
+    font-weight: bold;
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+.navbar-brand:hover {
+    color: #222;
+    background: none;
+    cursor: default;
+}
+
+.navbar-nav {
+    flex-direction: row;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-item {
+    margin-left: 10px;
+}
+
+.admin-link {
+    background-color: #007bff;
+    color: white !important;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.admin-link:hover {
+    background-color: #0056b3;
+    color: white !important;
+}
+
+@media (max-width: 600px) {
+    .navbar-container {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        padding: 0.25rem 0.5rem;
+    }
+    .navbar-back {
+        min-width: 32px;
+    }
+    .navbar-left {
+        gap: 5px;
+    }
+    .navbar-brand, .admin-link, .nav-link {
+        font-size: 0.9rem;
+        padding: 6px 8px;
+    }
+    .nav-item {
+        margin-left: 5px;
+    }
+}
+</style>

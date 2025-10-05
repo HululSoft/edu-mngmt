@@ -485,21 +485,6 @@ class DataManager:
             self.db_session.rollback()
             return {"status": "error", "message": f"Database error: {str(e)}"}
 
-    def _add_teacher(self, teacher_name, password):
-        # add a new teacher to the teachers list and save it to the file
-        with open(self.teachers_file, 'r', encoding='utf-8') as file:
-            teachers = json.load(file)
-        # find the maximum teacher ID
-        max_teacher_id = max([teacher['id'] for teacher in teachers], default=0)
-        # create a new teacher dictionary
-        # password show be base64 encoded before saving
-        encoded_password = base64.b64encode(password.encode()).decode()
-        new_teacher = {'id': max_teacher_id + 1, 'name': teacher_name, 'password': encoded_password}
-        teachers.append(new_teacher)
-        # save the updated teachers list to the file
-        with open(self.teachers_file, 'w', encoding='utf-8') as file:
-            json.dump(teachers, file, indent=4, ensure_ascii=False)
-
     def add_new_teacher(self, teacher_name, teacher_username, password):
         """
         Add a new teacher to the database.
@@ -722,10 +707,14 @@ class DataManager:
             self.db_session.rollback()
             raise ValueError(f"Database error: Unable to delete student permanently. {str(e)}")
 
-def count_fridays(year, month):
-    """
-    Count the number of Fridays in a given month and year.
-    """
+    def is_teacher_admin(self, teacher_id):
+        """
+        Returns True if the teacher with the given ID is an admin, else False.
+        """
+        teacher = self.db_session.query(Teacher).filter(Teacher.id == teacher_id).first()
+        return bool(teacher and getattr(teacher, 'is_admin', False))
+
+def count_fridays(year: int, month: int):
     # Get the number of days in the month
     days_in_month = calendar.monthrange(year, month)[1]
 

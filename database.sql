@@ -5,7 +5,8 @@ CREATE SCHEMA school_management;
 CREATE TABLE school_management.teachers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    password TEXT NOT NULL -- Assuming the passwords are stored as encoded strings
+    password TEXT NOT NULL, -- Assuming the passwords are stored as encoded strings
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- Step 3: Create the classes table
@@ -31,12 +32,12 @@ CREATE TABLE school_management.students (
 );
 
 -- Step 6: Insert data into the teachers table
-INSERT INTO school_management.teachers (id, name, password) VALUES
-(1, 'عمر بدران', 'U2FsYWhFZGxpbjEyMzQ='),
-(3, 'عدي بدران', 'U2FsYWhFZGxpbjEyMzQ='),
-(4, 'محمود خربط', 'U2FsYWhFZGxpbjEyMzQ='),
-(5, 'منير ناصر', 'U2FsYWhFZGxpbjEyMzQ='),
-(6, 'أسامة زيدان', 'U2FsYWhFZGxpbjEyMzQ=');
+INSERT INTO school_management.teachers (id, name, password, is_admin) VALUES
+(1, 'عمر بدران', 'U2FsYWhFZGxpbjEyMzQ=', TRUE),
+(3, 'عدي بدران', 'U2FsYWhFZGxpbjEyMzQ=', FALSE),
+(4, 'محمود خربط', 'U2FsYWhFZGxpbjEyMzQ=', FALSE),
+(5, 'منير ناصر', 'U2FsYWhFZGxpbjEyMzQ=', FALSE),
+(6, 'أسامة زيدان', 'U2FsYWhFZGxpbjEyMzQ=', FALSE);
 
 -- Step 7: Insert data into the classes table
 INSERT INTO school_management.classes (id, name) VALUES
