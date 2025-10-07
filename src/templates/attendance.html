@@ -128,10 +128,76 @@
         addStudentBtn.innerHTML = `<i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">اضافة طالب</span>`;
         addStudentBtn.onclick = openStudentForm;
         addNavLink(addStudentBtn);
+
+        // Add View Lessons button
+        let viewLessonsBtn = document.createElement("button");
+        viewLessonsBtn.className = "btn btn-outline-secondary ms-2";
+        viewLessonsBtn.innerHTML = `<i class="bi bi-calendar-range"></i> <span class="d-none d-sm-inline">عرض الدروس</span>`;
+        viewLessonsBtn.onclick = openLessonsModal;
+        addNavLink(viewLessonsBtn);
+
         setNavbarTitle("{{ class_name }}");
 
         fetchAndUpdateAttendance(formattedDate);
     });
+
+    // --- Lessons Modal and Logic ---
+    function openLessonsModal() {
+        // Set default date range (last year)
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 365);
+        document.getElementById('lessonsStartDate').value = start.toISOString().split('T')[0];
+        document.getElementById('lessonsEndDate').value = end.toISOString().split('T')[0];
+        fetchLessons();
+        // Add listeners to update lessons on date change
+        document.getElementById('lessonsStartDate').addEventListener('change', fetchLessons);
+        document.getElementById('lessonsEndDate').addEventListener('change', fetchLessons);
+        new bootstrap.Modal(document.getElementById('lessonsModal')).show();
+    }
+
+    async function fetchLessons() {
+        const start = document.getElementById('lessonsStartDate').value;
+        const end = document.getElementById('lessonsEndDate').value;
+        const response = await fetch(`/lessons_list/{{ class_id }}?start=${start}&end=${end}`);
+        const data = await response.json();
+        const tbody = document.querySelector('#lessonsTable tbody');
+        tbody.innerHTML = '';
+        data.forEach(lesson => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><a href="#" onclick="selectLessonDate('${lesson.date}')">${lesson.date}</a></td>
+                <td>${lesson.subject || ''}</td>
+                <td>${lesson.activity || ''}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function selectLessonDate(date) {
+        document.getElementById('lesson_date').value = date;
+        fetchAndUpdateAttendance(date);
+        bootstrap.Modal.getInstance(document.getElementById('lessonsModal')).hide();
+    }
+
+    function exportLessonsToExcel() {
+        const table = document.getElementById('lessonsTable');
+        let csv = [];
+        for (let row of table.rows) {
+            let rowData = [];
+            for (let cell of row.cells) {
+                rowData.push(cell.innerText.replace(/,/g, ''));
+            }
+            csv.push(rowData.join(','));
+        }
+        const csvContent = "data:text/csv;charset=utf-8," + csv.join('\n');
+        const link = document.createElement('a');
+        link.setAttribute('href', csvContent);
+        link.setAttribute('download', 'lessons.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
     function showActivityField() {
         document.getElementById("activityField").style.display = "block";
@@ -348,5 +414,46 @@
         document.getElementById('blur-overlay').classList.add('d-none');
     }
 </script>
-{% endblock %}
 
+<!-- Lessons Modal -->
+<div class="modal fade" id="lessonsModal" tabindex="-1" aria-labelledby="lessonsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header position-relative">
+                <h5 class="modal-title position-absolute top-50 start-50 translate-middle" id="lessonsModalLabel">عرض الدروس</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="lessonsStartDate" class="form-label">من تاريخ</label>
+                        <input type="date" class="form-control form-control-sm" id="lessonsStartDate">
+                    </div>
+                    <div class="col">
+                        <label for="lessonsEndDate" class="form-label">إلى تاريخ</label>
+                        <input type="date" class="form-control form-control-sm" id="lessonsEndDate">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table id="lessonsTable" class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>الموضوع</th>
+                                <th>الفعالية</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic content will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary" onclick="exportLessonsToExcel()">تصدير إلى Excel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

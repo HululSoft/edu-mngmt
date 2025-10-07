@@ -328,5 +328,13 @@ def delete_student_permanently(student_id):
         # Handle error gracefully
         return redirect(url_for('manage_students'))
 
+@app.route('/lessons_list/<int:class_id>')
+@login_required
+def lessons_list(class_id):
+    start = request.args.get('start')
+    end = request.args.get('end')
+    lessons = data_manager.get_lessons_in_range(class_id, start, end)
+    return jsonify(lessons)
+
 if __name__ == '__main__':
     app.run(debug=True)

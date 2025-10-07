@@ -714,6 +714,26 @@ class DataManager:
         teacher = self.db_session.query(Teacher).filter(Teacher.id == teacher_id).first()
         return bool(teacher and getattr(teacher, 'is_admin', False))
 
+    def get_lessons_in_range(self, class_id, start_date, end_date):
+        """
+        Return a list of lessons (date, subject, activity) for a class in a date range.
+        """
+        from models import LessonInfo
+        query = self.db_session.query(LessonInfo).filter(LessonInfo.class_id == class_id)
+        if start_date:
+            query = query.filter(LessonInfo.lesson_date >= start_date)
+        if end_date:
+            query = query.filter(LessonInfo.lesson_date <= end_date)
+        lessons = query.order_by(LessonInfo.lesson_date.desc()).all()
+        return [
+            {
+                "date": lesson.lesson_date.isoformat(),
+                "subject": lesson.lesson_subject,
+                "activity": lesson.lesson_activity
+            }
+            for lesson in lessons
+        ]
+
 def count_fridays(year: int, month: int):
     # Get the number of days in the month
     days_in_month = calendar.monthrange(year, month)[1]
