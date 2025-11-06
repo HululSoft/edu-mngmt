@@ -34,13 +34,33 @@
             text-align: center;
             text-decoration: none;
             color: #0d5bae;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         
         .class-selection li:hover {
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
         }
 
-        
+        .class-actions {
+            margin-top: 0;
+            display: flex;
+            gap: 8px;
+        }
+        .class-actions button {
+            cursor: pointer;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .btn-attendance { background:#0d5bae; color:#fff; }
+        .btn-attendance:hover { background:#0b4a8d; }
+        .btn-details { background:#607d8b; color:#fff; }
+        .btn-details:hover { background:#546e7a; }
+
+
         .class-selection .actions span {
             font-size: 1.1em; 
             font-weight: bold; 

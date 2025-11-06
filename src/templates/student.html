@@ -36,7 +36,10 @@
         </div>
         <div class="mb-3">
             <label for="joinDate" class="form-label">تاريخ الالتحاق</label>
-            <input type="date" class="form-control" id="joinDate" name="date_joined" value="{{ student.date_joined if student.date_joined else '' }}">
+            <input type="date" class="form-control" id="joinDate" name="date_joined" value="{{ student.date_joined if student.date_joined else '' }}" required>
+            <div class="alert alert-warning mt-2" role="alert">
+                <strong>تنبيه هام:</strong> يجب أن يعكس هذا التاريخ اليوم الحقيقي الذي التحق فيه الطالب، حيث ستعتمد جميع الحسابات على هذا التاريخ.
+            </div>
         </div>
         <div class="mb-3">
             <label for="phoneNumber" class="form-label">رقم الهاتف</label>

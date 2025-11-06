@@ -5,6 +5,7 @@ import time
 from functools import wraps
 from flask import Flask, request, render_template, redirect, url_for, session, jsonify
 from data_manager import DataManager
+from performance_api import bp as performance_bp
 from models import db
 
 app = Flask(__name__)
@@ -20,6 +21,9 @@ app.secret_key = 'supersecretkey'
 db.init_app(app)
 
 data_manager = DataManager(db.session)
+
+# Register API blueprints
+app.register_blueprint(performance_bp, url_prefix='/api/performance')
 
 logging.basicConfig(level=logging.INFO)
 custom_logger = logging.getLogger("custom")
@@ -144,8 +148,58 @@ def attendance_data(class_id, date):
     result = data_manager.get_scores_by_date(date, class_id, include_adjacent_dates=True)
     return jsonify(result)
 
+@app.route('/class_performance/<int:class_id>')
+@login_required
+def class_performance(class_id):
+    """Display comprehensive performance analytics for a class"""
+    from performance_api import compute_class_performance, compute_student_performance
+    from datetime import date, timedelta
 
+    # Get class info
+    selected_class = data_manager.get_class_by_id(class_id)
+    students = data_manager.get_students_by_class(class_id)
 
+    # Get date range from query params or default to last 30 days
+    start_str = request.args.get('start')
+    end_str = request.args.get('end')
+
+    if start_str and end_str:
+        from datetime import datetime
+        start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_str, '%Y-%m-%d').date()
+    else:
+        end_date = date.today()
+        start_date = end_date - timedelta(days=30)
+
+    # Get class-wide performance
+    class_perf = compute_class_performance(class_id, start_date, end_date)
+
+    # Get individual student performances
+    student_performances = []
+    for student in students:
+        perf = compute_student_performance(student['id'], class_id, start_date, end_date)
+        student_performances.append({
+            'student': student,
+            'attendance_percentage': perf.get('attendance_percentage', 0),
+            'current_streak': perf.get('current_attendance_streak', 0),
+            'longest_streak': perf.get('longest_attendance_streak', 0),
+            'attended_lessons': perf.get('attended_lessons', 0),
+            'total_lessons': perf.get('total_lessons', 0),
+            'absent_days': perf.get('total_lessons', 0) - perf.get('attended_lessons', 0)
+        })
+
+    # Calculate rankings
+    student_performances.sort(key=lambda x: x['attendance_percentage'], reverse=True)
+    for i, perf in enumerate(student_performances):
+        perf['rank'] = i + 1
+
+    return render_template('class_performance.html',
+                         selected_class=selected_class,
+                         class_performance=class_perf,
+                         student_performances=student_performances,
+                         start_date=start_date,
+                         end_date=end_date,
+                         total_students=len(students))
 
 @app.route('/monthly_report/<int:class_id>/<int:student_id>', methods=['GET', 'POST'])
 @login_required

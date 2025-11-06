@@ -136,6 +136,13 @@
         viewLessonsBtn.onclick = openLessonsModal;
         addNavLink(viewLessonsBtn);
 
+        // Add Performance button
+        let performanceBtn = document.createElement("button");
+        performanceBtn.className = "btn btn-outline-info ms-2";
+        performanceBtn.innerHTML = `<i class="bi bi-graph-up"></i> <span class="d-none d-sm-inline">أداء الصف</span>`;
+        performanceBtn.onclick = () => window.location.href = `/class_performance/{{ class_id }}`;
+        addNavLink(performanceBtn);
+
         setNavbarTitle("{{ class_name }}");
 
         fetchAndUpdateAttendance(formattedDate);
