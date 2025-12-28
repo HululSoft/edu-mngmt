@@ -23,16 +23,16 @@ jobs:
 
     - name: Copy Project Files to Remote Machine
       env:
-        SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
-        DEPLOY_SERVER_HOST: ${{ vars.DEPLOYMENT_SERVER_HOST }}
+        SSH_PASSWORD: "Hulsoft1234#"
+        DEPLOY_SERVER_HOST: "153.92.223.114"
       run: |
         sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@$DEPLOY_SERVER_HOST "rm -rf /tmp/hulul-app && mkdir -p /tmp/hulul-app"
         sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r * root@$DEPLOY_SERVER_HOST:/tmp/hulul-app
     
     - name: Build Docker Image on Remote Machine
       env:
-        SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
-        DEPLOY_SERVER_HOST: ${{ vars.DEPLOYMENT_SERVER_HOST }}
+        SSH_PASSWORD: "Hulsoft1234#"
+        DEPLOY_SERVER_HOST: "153.92.223.114"
         DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
         DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
       run: |
@@ -41,8 +41,8 @@ jobs:
 
     - name: Update Docker Image in docker-compose.yml and Deploy
       env:
-        SSH_PASSWORD: ${{ secrets.DEPLOYMENT_SERVER_SSH_PASS }}
-        DEPLOY_SERVER_HOST: ${{ vars.DEPLOYMENT_SERVER_HOST }}
+        SSH_PASSWORD: "Hulsoft1234#"
+        DEPLOY_SERVER_HOST: "153.92.223.114"
         DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
         DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
       run: |
